@@ -1,22 +1,30 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Salon Management API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
-    description: Health operations
+  - name: customers
+  - name: staff
+  - name: services
+  - name: products
+  - name: appointments
+  - name: bills
+  - name: expenses
+  - name: memberships
+  - name: dashboard
+  - name: reports
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +32,343 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # ── CUSTOMERS ────────────────────────────────────────────
+  /customers:
+    get:
+      operationId: listCustomers
+      tags: [customers]
+      summary: List all customers
+      parameters:
+        - in: query
+          name: search
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of customers
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerListResponse"
+    post:
+      operationId: createCustomer
+      tags: [customers]
+      summary: Create a customer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCustomerBody"
+      responses:
+        "201":
+          description: Created customer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+
+  /customers/{customerId}:
+    get:
+      operationId: getCustomer
+      tags: [customers]
+      summary: Get customer with appointment history
+      parameters:
+        - in: path
+          name: customerId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Customer detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerDetail"
+
+  # ── STAFF ─────────────────────────────────────────────────
+  /staff:
+    get:
+      operationId: listStaff
+      tags: [staff]
+      summary: List all staff
+      responses:
+        "200":
+          description: List of staff
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StaffListResponse"
+    post:
+      operationId: createStaff
+      tags: [staff]
+      summary: Create a staff member
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateStaffBody"
+      responses:
+        "201":
+          description: Created staff member
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Staff"
+
+  # ── SERVICES ──────────────────────────────────────────────
+  /services:
+    get:
+      operationId: listServices
+      tags: [services]
+      summary: List all services
+      responses:
+        "200":
+          description: List of services
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceListResponse"
+    post:
+      operationId: createService
+      tags: [services]
+      summary: Create a service
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateServiceBody"
+      responses:
+        "201":
+          description: Created service
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Service"
+
+  # ── PRODUCTS ──────────────────────────────────────────────
+  /products:
+    get:
+      operationId: listProducts
+      tags: [products]
+      summary: List all products
+      responses:
+        "200":
+          description: List of products
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductListResponse"
+    post:
+      operationId: createProduct
+      tags: [products]
+      summary: Create a product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProductBody"
+      responses:
+        "201":
+          description: Created product
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+
+  # ── APPOINTMENTS ──────────────────────────────────────────
+  /appointments:
+    get:
+      operationId: listAppointments
+      tags: [appointments]
+      summary: List appointments
+      parameters:
+        - in: query
+          name: date
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of appointments
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppointmentListResponse"
+    post:
+      operationId: createAppointment
+      tags: [appointments]
+      summary: Create an appointment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAppointmentBody"
+      responses:
+        "201":
+          description: Created appointment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Appointment"
+
+  /appointments/{appointmentId}:
+    put:
+      operationId: updateAppointment
+      tags: [appointments]
+      summary: Update appointment status
+      parameters:
+        - in: path
+          name: appointmentId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateAppointmentBody"
+      responses:
+        "200":
+          description: Updated appointment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Appointment"
+
+  # ── BILLS / POS ────────────────────────────────────────────
+  /bills:
+    get:
+      operationId: listBills
+      tags: [bills]
+      summary: List bills
+      responses:
+        "200":
+          description: List of bills
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BillListResponse"
+    post:
+      operationId: createBill
+      tags: [bills]
+      summary: Create a bill
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBillBody"
+      responses:
+        "201":
+          description: Created bill
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bill"
+
+  # ── EXPENSES ───────────────────────────────────────────────
+  /expenses:
+    get:
+      operationId: listExpenses
+      tags: [expenses]
+      summary: List expenses
+      responses:
+        "200":
+          description: List of expenses
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExpenseListResponse"
+    post:
+      operationId: createExpense
+      tags: [expenses]
+      summary: Create an expense
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateExpenseBody"
+      responses:
+        "201":
+          description: Created expense
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Expense"
+
+  # ── MEMBERSHIPS ────────────────────────────────────────────
+  /memberships:
+    get:
+      operationId: listMemberships
+      tags: [memberships]
+      summary: List membership packages
+      responses:
+        "200":
+          description: List of memberships
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MembershipListResponse"
+    post:
+      operationId: createMembership
+      tags: [memberships]
+      summary: Create a membership package
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMembershipBody"
+      responses:
+        "201":
+          description: Created membership
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Membership"
+
+  # ── DASHBOARD ──────────────────────────────────────────────
+  /dashboard/stats:
+    get:
+      operationId: getDashboardStats
+      tags: [dashboard]
+      summary: Get dashboard stats and analytics
+      responses:
+        "200":
+          description: Dashboard stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  # ── REPORTS ────────────────────────────────────────────────
+  /reports/revenue:
+    get:
+      operationId: getRevenueReport
+      tags: [reports]
+      summary: Get revenue report
+      parameters:
+        - in: query
+          name: period
+          schema:
+            type: string
+            enum: [daily, weekly, monthly]
+      responses:
+        "200":
+          description: Revenue report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RevenueReport"
+
 components:
   schemas:
     HealthStatus:
@@ -31,6 +376,541 @@ components:
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
+    # ── CUSTOMER ──
+    Customer:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        dob:
+          type: string
+        notes:
+          type: string
+        totalSpend:
+          type: number
+        totalVisits:
+          type: number
+        createdAt:
+          type: string
+      required: [id, name, phone]
+
+    CustomerListResponse:
+      type: object
+      properties:
+        customers:
+          type: array
+          items:
+            $ref: "#/components/schemas/Customer"
+      required: [customers]
+
+    CreateCustomerBody:
+      type: object
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        dob:
+          type: string
+        notes:
+          type: string
+      required: [name, phone]
+
+    CustomerDetail:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        dob:
+          type: string
+        notes:
+          type: string
+        totalSpend:
+          type: number
+        totalVisits:
+          type: number
+        appointments:
+          type: array
+          items:
+            $ref: "#/components/schemas/Appointment"
+      required: [id, name, phone]
+
+    # ── STAFF ──
+    Staff:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        specialization:
+          type: string
+        commissionPercent:
+          type: number
+        phone:
+          type: string
+        avatarInitials:
+          type: string
+      required: [id, name, specialization]
+
+    StaffListResponse:
+      type: object
+      properties:
+        staff:
+          type: array
+          items:
+            $ref: "#/components/schemas/Staff"
+      required: [staff]
+
+    CreateStaffBody:
+      type: object
+      properties:
+        name:
+          type: string
+        specialization:
+          type: string
+        commissionPercent:
+          type: number
+        phone:
+          type: string
+      required: [name, specialization]
+
+    # ── SERVICE ──
+    Service:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        category:
+          type: string
+        price:
+          type: number
+        duration:
+          type: number
+      required: [id, name, category, price, duration]
+
+    ServiceListResponse:
+      type: object
+      properties:
+        services:
+          type: array
+          items:
+            $ref: "#/components/schemas/Service"
+        categories:
+          type: array
+          items:
+            type: string
+      required: [services, categories]
+
+    CreateServiceBody:
+      type: object
+      properties:
+        name:
+          type: string
+        category:
+          type: string
+        price:
+          type: number
+        duration:
+          type: number
+      required: [name, category, price, duration]
+
+    # ── PRODUCT ──
+    Product:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        category:
+          type: string
+        brand:
+          type: string
+        stockQuantity:
+          type: number
+        costPrice:
+          type: number
+        sellingPrice:
+          type: number
+        isLowStock:
+          type: boolean
+      required: [id, name, category, sellingPrice, stockQuantity]
+
+    ProductListResponse:
+      type: object
+      properties:
+        products:
+          type: array
+          items:
+            $ref: "#/components/schemas/Product"
+      required: [products]
+
+    CreateProductBody:
+      type: object
+      properties:
+        name:
+          type: string
+        category:
+          type: string
+        brand:
+          type: string
+        stockQuantity:
+          type: number
+        costPrice:
+          type: number
+        sellingPrice:
+          type: number
+        lowStockThreshold:
+          type: number
+      required: [name, category, sellingPrice, stockQuantity]
+
+    # ── APPOINTMENT ──
+    Appointment:
+      type: object
+      properties:
+        id:
+          type: string
+        customerId:
+          type: string
+        customerName:
+          type: string
+        customerPhone:
+          type: string
+        staffId:
+          type: string
+        staffName:
+          type: string
+        serviceId:
+          type: string
+        serviceName:
+          type: string
+        serviceCategory:
+          type: string
+        duration:
+          type: number
+        appointmentDate:
+          type: string
+        appointmentTime:
+          type: string
+        status:
+          type: string
+        notes:
+          type: string
+        createdAt:
+          type: string
+      required: [id, staffId, serviceId, appointmentDate, appointmentTime, status]
+
+    AppointmentListResponse:
+      type: object
+      properties:
+        appointments:
+          type: array
+          items:
+            $ref: "#/components/schemas/Appointment"
+      required: [appointments]
+
+    CreateAppointmentBody:
+      type: object
+      properties:
+        customerId:
+          type: string
+        staffId:
+          type: string
+        serviceId:
+          type: string
+        appointmentDate:
+          type: string
+        appointmentTime:
+          type: string
+        notes:
+          type: string
+      required: [staffId, serviceId, appointmentDate, appointmentTime]
+
+    UpdateAppointmentBody:
+      type: object
+      properties:
+        status:
+          type: string
+        notes:
+          type: string
+
+    # ── BILL ──
+    BillItem:
+      type: object
+      properties:
+        type:
+          type: string
+        itemId:
+          type: string
+        name:
+          type: string
+        staffId:
+          type: string
+        staffName:
+          type: string
+        price:
+          type: number
+        quantity:
+          type: number
+        discount:
+          type: number
+        total:
+          type: number
+      required: [type, itemId, name, price, quantity, total]
+
+    Bill:
+      type: object
+      properties:
+        id:
+          type: string
+        billNumber:
+          type: string
+        customerId:
+          type: string
+        customerName:
+          type: string
+        customerPhone:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/BillItem"
+        subtotal:
+          type: number
+        taxPercent:
+          type: number
+        taxAmount:
+          type: number
+        discountAmount:
+          type: number
+        finalAmount:
+          type: number
+        paymentMethod:
+          type: string
+        status:
+          type: string
+        createdAt:
+          type: string
+      required: [id, billNumber, finalAmount, paymentMethod, status]
+
+    BillListResponse:
+      type: object
+      properties:
+        bills:
+          type: array
+          items:
+            $ref: "#/components/schemas/Bill"
+      required: [bills]
+
+    CreateBillBody:
+      type: object
+      properties:
+        customerId:
+          type: string
+        customerName:
+          type: string
+        customerPhone:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/BillItem"
+        subtotal:
+          type: number
+        taxPercent:
+          type: number
+        taxAmount:
+          type: number
+        discountAmount:
+          type: number
+        finalAmount:
+          type: number
+        paymentMethod:
+          type: string
+        status:
+          type: string
+      required: [items, finalAmount, paymentMethod, status]
+
+    # ── EXPENSE ──
+    Expense:
+      type: object
+      properties:
+        id:
+          type: string
+        category:
+          type: string
+        description:
+          type: string
+        amount:
+          type: number
+        date:
+          type: string
+        createdAt:
+          type: string
+      required: [id, category, amount, date]
+
+    ExpenseListResponse:
+      type: object
+      properties:
+        expenses:
+          type: array
+          items:
+            $ref: "#/components/schemas/Expense"
+      required: [expenses]
+
+    CreateExpenseBody:
+      type: object
+      properties:
+        category:
+          type: string
+        description:
+          type: string
+        amount:
+          type: number
+        date:
+          type: string
+      required: [category, amount, date]
+
+    # ── MEMBERSHIP ──
+    Membership:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        price:
+          type: number
+        duration:
+          type: number
+        benefits:
+          type: string
+        discountPercent:
+          type: number
+      required: [id, name, price, duration]
+
+    MembershipListResponse:
+      type: object
+      properties:
+        memberships:
+          type: array
+          items:
+            $ref: "#/components/schemas/Membership"
+      required: [memberships]
+
+    CreateMembershipBody:
+      type: object
+      properties:
+        name:
+          type: string
+        price:
+          type: number
+        duration:
+          type: number
+        benefits:
+          type: string
+        discountPercent:
+          type: number
+      required: [name, price, duration]
+
+    # ── DASHBOARD ──
+    TopServiceItem:
+      type: object
+      properties:
+        name:
+          type: string
+        revenue:
+          type: number
+        count:
+          type: number
+      required: [name, revenue]
+
+    TopStaffItem:
+      type: object
+      properties:
+        name:
+          type: string
+        revenue:
+          type: number
+      required: [name, revenue]
+
+    DashboardStats:
+      type: object
+      properties:
+        todayRevenue:
+          type: number
+        todayBills:
+          type: number
+        todayCustomers:
+          type: number
+        totalCustomers:
+          type: number
+        monthRevenue:
+          type: number
+        monthBills:
+          type: number
+        pendingAppointments:
+          type: number
+        lowStockCount:
+          type: number
+        topServices:
+          type: array
+          items:
+            $ref: "#/components/schemas/TopServiceItem"
+        topStaff:
+          type: array
+          items:
+            $ref: "#/components/schemas/TopStaffItem"
+        recentBills:
+          type: array
+          items:
+            $ref: "#/components/schemas/Bill"
+      required: [todayRevenue, todayBills, totalCustomers, monthRevenue, monthBills, pendingAppointments, lowStockCount]
+
+    # ── REPORTS ──
+    RevenueDataPoint:
+      type: object
+      properties:
+        label:
+          type: string
+        revenue:
+          type: number
+        bills:
+          type: number
+        customers:
+          type: number
+      required: [label, revenue]
+
+    RevenueReport:
+      type: object
+      properties:
+        period:
+          type: string
+        totalRevenue:
+          type: number
+        totalBills:
+          type: number
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/RevenueDataPoint"
+      required: [period, totalRevenue, totalBills, data]

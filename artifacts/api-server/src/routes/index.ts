@@ -1,8 +1,28 @@
 import { Router, type IRouter } from "express";
-import healthRouter from "./health";
+import healthRouter from "./health.js";
+import customersRouter from "./customers.js";
+import staffRouter from "./staff.js";
+import servicesRouter from "./services.js";
+import productsRouter from "./products.js";
+import appointmentsRouter from "./appointments.js";
+import billsRouter from "./bills.js";
+import expensesRouter from "./expenses.js";
+import membershipsRouter from "./memberships.js";
+import dashboardRouter from "./dashboard.js";
+import reportsRouter from "./reports.js";
 
 const router: IRouter = Router();
 
 router.use(healthRouter);
+router.use(customersRouter);
+router.use(staffRouter);
+router.use(servicesRouter);
+router.use(productsRouter);
+router.use(appointmentsRouter);
+router.use(billsRouter);
+router.use(expensesRouter);
+router.use(membershipsRouter);
+router.use(dashboardRouter);
+router.use(reportsRouter);
 
 export default router;
