@@ -38,6 +38,8 @@
   --color-sidebar: hsl(var(--sidebar));
   --color-sidebar-foreground: hsl(var(--sidebar-foreground));
   --color-sidebar-border: hsl(var(--sidebar-border));
+  --color-sidebar-accent: hsl(var(--sidebar-accent));
+  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
 
   --font-sans: var(--app-font-sans);
   --font-serif: var(--app-font-serif);
@@ -76,9 +78,11 @@
   --chart-3: 197 37% 24%;
   --chart-4: 43 74% 66%;
   --chart-5: 27 87% 67%;
-  --sidebar: 0 0% 98%;
-  --sidebar-foreground: 240 5.3% 26.1%;
-  --sidebar-border: 240 5.9% 90%;
+  --sidebar: 270 30% 12%;
+  --sidebar-foreground: 0 0% 92%;
+  --sidebar-border: 270 20% 20%;
+  --sidebar-accent: 270 25% 22%;
+  --sidebar-accent-foreground: 0 0% 98%;
   --app-font-sans: 'Inter', sans-serif;
   --app-font-serif: 'Playfair Display', Georgia, serif;
   --app-font-mono: 'Space Mono', monospace;
@@ -112,9 +116,11 @@
   --chart-3: 30 80% 55%;
   --chart-4: 280 65% 60%;
   --chart-5: 340 75% 55%;
-  --sidebar: 240 5.9% 10%;
-  --sidebar-foreground: 240 4.8% 95.9%;
-  --sidebar-border: 240 3.7% 15.9%;
+  --sidebar: 270 30% 8%;
+  --sidebar-foreground: 0 0% 92%;
+  --sidebar-border: 270 20% 16%;
+  --sidebar-accent: 270 25% 18%;
+  --sidebar-accent-foreground: 0 0% 98%;
 }
 
 @layer base {
@@ -127,5 +133,5 @@
 }
 
 .rose-gold-gradient {
-  background: linear-gradient(135deg, #b76e79, #e8a0a8);
+  background: linear-gradient(135deg, #c0737a 0%, #e8a598 50%, #d4956a 100%);
 }
