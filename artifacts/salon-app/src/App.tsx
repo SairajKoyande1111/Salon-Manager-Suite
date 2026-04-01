@@ -15,6 +15,7 @@ import Products from "@/pages/products";
 import Expenses from "@/pages/expenses";
 import Memberships from "@/pages/memberships";
 import Reports from "@/pages/reports";
+import Invoices from "@/pages/invoices";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +34,7 @@ function Router() {
         <Route path="/expenses" component={Expenses} />
         <Route path="/memberships" component={Memberships} />
         <Route path="/reports" component={Reports} />
+        <Route path="/invoices" component={Invoices} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

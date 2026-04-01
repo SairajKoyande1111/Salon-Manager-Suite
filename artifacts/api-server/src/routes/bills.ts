@@ -13,11 +13,31 @@ async function generateBillNumber(): Promise<string> {
   return `BILL-${yy}${mm}-${num}`;
 }
 
-router.get("/bills", async (_req, res) => {
-  const bills = await Bill.find().sort({ createdAt: -1 }).limit(100);
+router.get("/bills", async (req, res) => {
+  const { customerId, from, to, paymentMethod } = req.query as Record<string, string>;
+  const query: Record<string, any> = {};
+  if (customerId) query.customerId = customerId;
+  if (paymentMethod) query.paymentMethod = paymentMethod;
+  if (from || to) {
+    query.createdAt = {};
+    if (from) query.createdAt.$gte = new Date(from);
+    if (to) {
+      const toDate = new Date(to);
+      toDate.setHours(23, 59, 59, 999);
+      query.createdAt.$lte = toDate;
+    }
+  }
+  const bills = await Bill.find(query).sort({ createdAt: -1 }).limit(500);
   res.json({
     bills: bills.map((b) => ({ ...b.toObject(), id: b._id.toString() })),
   });
+});
+
+router.get("/bills/:billId", async (req, res) => {
+  const { billId } = req.params;
+  const bill = await Bill.findById(billId);
+  if (!bill) return res.status(404).json({ error: "Bill not found" });
+  res.json({ ...bill.toObject(), id: bill._id.toString() });
 });
 
 router.post("/bills", async (req, res) => {

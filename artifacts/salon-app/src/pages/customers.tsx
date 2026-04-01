@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useListCustomers, useCreateCustomer } from "@workspace/api-client-react";
-import { Search, Plus, User, Phone, Calendar, TrendingUp, Eye, Pencil, Trash2, X, Scissors, Package } from "lucide-react";
+import { Search, Plus, User, Phone, Calendar, TrendingUp, Eye, Pencil, Trash2, X, Scissors, Package, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import { InvoiceModal } from "@/components/InvoiceModal";
 
 const API_BASE = "/api";
 
@@ -31,6 +32,9 @@ export default function Customers() {
   // Delete confirm
   const [deleteCustomer, setDeleteCustomer] = useState<any>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+
+  // Invoice view
+  const [viewInvoiceBill, setViewInvoiceBill] = useState<any>(null);
 
   const validatePhone = (phone: string) => {
     if (!/^\d{10}$/.test(phone)) {
@@ -364,6 +368,11 @@ export default function Customers() {
         </div>
       )}
 
+      {/* ── Invoice Modal ── */}
+      {viewInvoiceBill && (
+        <InvoiceModal bill={viewInvoiceBill} onClose={() => setViewInvoiceBill(null)} />
+      )}
+
       {/* ── View Customer Profile Modal ── */}
       {viewCustomerId && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in">
@@ -464,12 +473,20 @@ export default function Customers() {
                               </div>
                             )}
 
-                            {/* Payment info */}
-                            <div className="mt-2 pt-2 border-t border-border/30 flex items-center gap-3 text-xs text-muted-foreground">
-                              <span className="capitalize">💳 {bill.paymentMethod}</span>
-                              <span className={`capitalize font-semibold ${bill.status === "paid" ? "text-emerald-600" : "text-amber-600"}`}>
-                                {bill.status}
-                              </span>
+                            {/* Payment info + View Invoice */}
+                            <div className="mt-2 pt-2 border-t border-border/30 flex items-center justify-between gap-3 text-xs text-muted-foreground">
+                              <div className="flex items-center gap-3">
+                                <span className="capitalize">💳 {bill.paymentMethod}</span>
+                                <span className={`capitalize font-semibold ${bill.status === "paid" ? "text-emerald-600" : "text-amber-600"}`}>
+                                  {bill.status}
+                                </span>
+                              </div>
+                              <button
+                                onClick={() => setViewInvoiceBill({ ...bill, customerPhone: customerDetail.phone })}
+                                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors font-semibold text-xs"
+                              >
+                                <FileText className="w-3.5 h-3.5" /> View Invoice
+                              </button>
                             </div>
                           </div>
                         ))}

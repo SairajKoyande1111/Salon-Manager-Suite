@@ -10,6 +10,7 @@ import {
   Tag, 
   BarChart3, 
   Receipt,
+  FileText,
   Settings,
   Scissors
 } from "lucide-react";
@@ -20,6 +21,7 @@ const navItems = [
   { icon: MonitorCheck, label: "POS / New Bill", href: "/pos" },
   { icon: CalendarDays, label: "Appointments", href: "/appointments" },
   { icon: Users, label: "Customers", href: "/customers" },
+  { icon: FileText, label: "Invoices", href: "/invoices" },
   { icon: Sparkles, label: "Services", href: "/services" },
   { icon: Package, label: "Products", href: "/products" },
   { icon: Briefcase, label: "Staff", href: "/staff" },

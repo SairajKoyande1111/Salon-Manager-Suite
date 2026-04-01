@@ -42,6 +42,16 @@ A full-stack Salon Management System with a React frontend and Express/MongoDB b
 - `artifacts/salon-app/src/components/layout.tsx` — Sidebar navigation
 - `artifacts/salon-app/src/pages/` — All 10 page components
 
+## Invoice Module
+- `/invoices` page: lists all bills as invoices with filters (search, date range, payment method)
+- Each row shows Invoice #, customer, contact, date, payment method, amount, status + View button
+- View button opens full invoice modal with salon branding header (AT SALON, address, contact, GSTIN)
+- Invoice shows: customer info, itemized services/products table, totals breakdown, payment badge
+- "Download / Print" button in modal opens print dialog → save as PDF
+- Customers page: each bill in visit history now has a "View Invoice" button linking to the same modal
+- Backend: GET /api/bills now supports `from`, `to`, `paymentMethod`, `customerId` query filters
+- Backend: GET /api/bills/:billId returns a single bill by ID
+
 ## Seeded Data
 - 7 services (Hair Cut, Keratin, Gold Facial, Body Massage, Bridal Makeup, Nail Art, Hair Color)
 - 4 staff members (Priya Sharma, Kavya Nair, Anjali Desai, Sneha Rao)
