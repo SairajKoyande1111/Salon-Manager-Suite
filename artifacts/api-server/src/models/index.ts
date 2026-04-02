@@ -68,6 +68,21 @@ export const Service =
   mongoose.models.Service ||
   mongoose.model<IService>("Service", ServiceSchema);
 
+// ── ProductMeta ───────────────────────────────────────────
+export interface IProductMeta extends Document {
+  categories: string[];
+  brands: string[];
+}
+
+const ProductMetaSchema = new Schema<IProductMeta>({
+  categories: { type: [String], default: [] },
+  brands: { type: [String], default: [] },
+});
+
+export const ProductMeta =
+  mongoose.models.ProductMeta ||
+  mongoose.model<IProductMeta>("ProductMeta", ProductMetaSchema);
+
 // ── Product ───────────────────────────────────────────────
 export interface IProduct extends Document {
   name: string;
