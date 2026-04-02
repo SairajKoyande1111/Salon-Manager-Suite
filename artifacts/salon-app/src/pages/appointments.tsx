@@ -94,29 +94,111 @@ function SearchSelect({
   );
 }
 
-// Customer searchable select with add-new inline
+// Full add-customer modal — same architecture as Customers page
+function AddCustomerModal({ onClose, onSaved }: {
+  onClose: () => void;
+  onSaved: (customer: any) => void;
+}) {
+  const [form, setForm] = useState({ name: "", phone: "", dob: "", notes: "" });
+  const [phoneError, setPhoneError] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const validatePhone = (v: string) => {
+    if (!/^\d{10}$/.test(v)) { setPhoneError("Phone number must be exactly 10 digits"); return false; }
+    setPhoneError(""); return true;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validatePhone(form.phone)) return;
+    setSaving(true);
+    try {
+      const res = await fetch(`${API_BASE}/customers`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: form.name, phone: form.phone, dob: form.dob, notes: form.notes, email: "" }),
+      });
+      if (!res.ok) throw new Error();
+      const created = await res.json();
+      onSaved(created);
+    } catch {
+      setPhoneError("Failed to save. Try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-in fade-in">
+      <div className="bg-card rounded-3xl p-8 w-full max-w-md shadow-2xl">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-serif font-bold text-primary">New Customer</h2>
+          <button type="button" onClick={onClose} className="p-2 rounded-lg hover:bg-muted transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-1 text-muted-foreground">Full Name *</label>
+            <input required autoFocus placeholder="Enter full name"
+              className="w-full p-3 rounded-xl border bg-muted/30 focus:ring-2 focus:ring-primary/20 outline-none"
+              value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1 text-muted-foreground">Phone Number * (10 digits)</label>
+            <input required type="tel" maxLength={10} placeholder="10-digit mobile number"
+              className={`w-full p-3 rounded-xl border bg-muted/30 focus:ring-2 outline-none ${phoneError ? "border-red-400 focus:ring-red-200" : "focus:ring-primary/20"}`}
+              value={form.phone}
+              onChange={e => { const v = e.target.value.replace(/\D/g, ""); setForm({ ...form, phone: v }); if (v.length === 10) setPhoneError(""); }}
+              onBlur={e => validatePhone(e.target.value)} />
+            {phoneError && <p className="text-red-500 text-xs mt-1">{phoneError}</p>}
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1 text-muted-foreground">Date of Birth</label>
+            <input type="date"
+              className="w-full p-3 rounded-xl border bg-muted/30 focus:ring-2 focus:ring-primary/20 outline-none"
+              value={form.dob} onChange={e => setForm({ ...form, dob: e.target.value })} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1 text-muted-foreground">Notes (Optional)</label>
+            <textarea rows={2} placeholder="Any special preferences or notes..."
+              className="w-full p-3 rounded-xl border bg-muted/30 focus:ring-2 focus:ring-primary/20 outline-none resize-none"
+              value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} />
+          </div>
+          <div className="flex gap-3 mt-6">
+            <button type="button" onClick={onClose}
+              className="flex-1 py-3 rounded-xl border hover:bg-muted font-medium transition-colors">Cancel</button>
+            <button type="submit" disabled={saving}
+              className="flex-1 py-3 rounded-xl bg-primary text-white font-medium hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20 disabled:opacity-50">
+              {saving ? "Saving..." : "Add Customer"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// Customer searchable select — dropdown to search/pick, button to open full add modal
 function CustomerSelect({
   value, onChange, customers, onCustomerCreated,
 }: {
   value: string;
-  onChange: (id: string, name?: string) => void;
+  onChange: (id: string) => void;
   customers: any[];
   onCustomerCreated: (c: any) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [showAdd, setShowAdd] = useState(false);
-  const [newName, setNewName] = useState("");
-  const [newPhone, setNewPhone] = useState("");
-  const [saving, setSaving] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  const selected = value === "walk-in" ? null : customers.find(c => (c.id || c._id) === value);
-  const displayLabel = value === "walk-in" || !value ? "Walk-in" : selected ? `${selected.name}${selected.phone ? ` · ${selected.phone}` : ""}` : "Walk-in";
+  const selected = customers.find(c => (c.id || c._id) === value);
+  const displayLabel = !value ? "Walk-in" : selected ? `${selected.name}${selected.phone ? ` · ${selected.phone}` : ""}` : "Walk-in";
 
   useEffect(() => {
     const h = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) { setOpen(false); setShowAdd(false); }
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     };
     document.addEventListener("mousedown", h);
     return () => document.removeEventListener("mousedown", h);
@@ -127,114 +209,68 @@ function CustomerSelect({
     (c.phone || "").includes(search)
   );
 
-  const handleCreate = async () => {
-    if (!newName.trim() || !newPhone.trim()) return;
-    setSaving(true);
-    try {
-      const res = await fetch(`${API_BASE}/customers`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newName.trim(), phone: newPhone.trim() }),
-      });
-      const created = await res.json();
-      onCustomerCreated(created);
-      onChange(created.id || created._id, created.name);
-      setOpen(false);
-      setShowAdd(false);
-      setNewName(""); setNewPhone(""); setSearch("");
-    } finally {
-      setSaving(false);
-    }
-  };
-
   return (
-    <div className="relative" ref={ref}>
-      <button type="button"
-        onClick={() => { setOpen(o => !o); setSearch(""); setShowAdd(false); }}
-        className="w-full p-2.5 rounded-xl border border-border bg-background text-sm text-left flex items-center justify-between focus:ring-2 focus:ring-primary/40 outline-none"
-      >
-        <span className={!value || value === "walk-in" ? "text-muted-foreground" : "text-foreground font-medium"}>
-          {displayLabel}
-        </span>
-        <Search className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
-      </button>
-      {open && (
-        <div className="absolute z-20 w-full mt-1 bg-card border border-border/60 rounded-xl shadow-xl overflow-hidden">
-          <div className="p-2 border-b border-border/40">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-              <input
-                autoFocus
-                placeholder="Search by name or phone..."
-                className="w-full pl-8 pr-3 py-2 text-sm bg-muted/40 rounded-lg outline-none focus:ring-2 focus:ring-primary/20"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-              />
+    <>
+      <div className="relative" ref={ref}>
+        <button type="button"
+          onClick={() => { setOpen(o => !o); setSearch(""); }}
+          className="w-full p-2.5 rounded-xl border border-border bg-background text-sm text-left flex items-center justify-between focus:ring-2 focus:ring-primary/40 outline-none"
+        >
+          <span className={!value ? "text-muted-foreground" : "text-foreground font-medium"}>
+            {displayLabel}
+          </span>
+          <Search className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+        </button>
+        {open && (
+          <div className="absolute z-20 w-full mt-1 bg-card border border-border/60 rounded-xl shadow-xl overflow-hidden">
+            <div className="p-2 border-b border-border/40">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                <input autoFocus placeholder="Search by name or phone..."
+                  className="w-full pl-8 pr-3 py-2 text-sm bg-muted/40 rounded-lg outline-none focus:ring-2 focus:ring-primary/20"
+                  value={search} onChange={e => setSearch(e.target.value)} />
+              </div>
+            </div>
+            <div className="max-h-48 overflow-y-auto">
+              <button type="button"
+                className={`w-full text-left px-4 py-2.5 text-sm hover:bg-muted/60 transition-colors font-medium ${!value ? "text-primary bg-primary/5" : ""}`}
+                onClick={() => { onChange(""); setOpen(false); setSearch(""); }}>
+                Walk-in
+              </button>
+              {filtered.map(c => (
+                <button key={c.id || c._id} type="button"
+                  className={`w-full text-left px-4 py-2.5 text-sm hover:bg-muted/60 transition-colors ${(c.id || c._id) === value ? "text-primary bg-primary/5 font-medium" : ""}`}
+                  onClick={() => { onChange(c.id || c._id); setOpen(false); setSearch(""); }}>
+                  <p className="font-medium">{c.name}</p>
+                  {c.phone && <p className="text-xs text-muted-foreground">{c.phone}</p>}
+                </button>
+              ))}
+              {filtered.length === 0 && search && (
+                <p className="px-4 py-2 text-xs text-muted-foreground">No customer found</p>
+              )}
+            </div>
+            <div className="border-t border-border/40">
+              <button type="button"
+                className="w-full text-left px-4 py-2.5 text-sm text-primary font-semibold hover:bg-primary/5 transition-colors flex items-center gap-2"
+                onClick={() => { setOpen(false); setShowAddModal(true); }}>
+                <UserPlus className="w-4 h-4" /> Add new customer
+              </button>
             </div>
           </div>
-          {!showAdd ? (
-            <>
-              <div className="max-h-44 overflow-y-auto">
-                <button type="button"
-                  className={`w-full text-left px-4 py-2.5 text-sm hover:bg-muted/60 transition-colors font-medium ${!value || value === "walk-in" ? "text-primary bg-primary/5" : ""}`}
-                  onClick={() => { onChange("", "Walk-in"); setOpen(false); setSearch(""); }}>
-                  Walk-in
-                </button>
-                {filtered.map(c => (
-                  <button key={c.id || c._id} type="button"
-                    className={`w-full text-left px-4 py-2.5 text-sm hover:bg-muted/60 transition-colors ${(c.id || c._id) === value ? "text-primary bg-primary/5 font-medium" : ""}`}
-                    onClick={() => { onChange(c.id || c._id, c.name); setOpen(false); setSearch(""); }}>
-                    <p className="font-medium">{c.name}</p>
-                    {c.phone && <p className="text-xs text-muted-foreground">{c.phone}</p>}
-                  </button>
-                ))}
-                {filtered.length === 0 && search && (
-                  <p className="px-4 py-2 text-xs text-muted-foreground">No customer found</p>
-                )}
-              </div>
-              <div className="border-t border-border/40">
-                <button type="button"
-                  className="w-full text-left px-4 py-2.5 text-sm text-primary font-semibold hover:bg-primary/5 transition-colors flex items-center gap-2"
-                  onClick={() => { setShowAdd(true); setNewName(search); }}>
-                  <UserPlus className="w-4 h-4" /> Add new customer
-                </button>
-              </div>
-            </>
-          ) : (
-            <div className="p-3 space-y-2">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">New Customer</p>
-              <input
-                autoFocus
-                placeholder="Full name *"
-                className="w-full p-2.5 rounded-lg border text-sm bg-muted/30 outline-none focus:ring-2 focus:ring-primary/20"
-                value={newName}
-                onChange={e => setNewName(e.target.value)}
-              />
-              <input
-                placeholder="Phone number *"
-                className="w-full p-2.5 rounded-lg border text-sm bg-muted/30 outline-none focus:ring-2 focus:ring-primary/20"
-                value={newPhone}
-                onChange={e => setNewPhone(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && (e.preventDefault(), handleCreate())}
-              />
-              <div className="flex gap-2 pt-1">
-                <button type="button"
-                  className="flex-1 py-2 rounded-lg border text-sm font-medium hover:bg-muted transition-colors"
-                  onClick={() => { setShowAdd(false); setNewName(""); setNewPhone(""); }}>
-                  Back
-                </button>
-                <button type="button"
-                  disabled={saving || !newName.trim() || !newPhone.trim()}
-                  className="flex-1 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors"
-                  onClick={handleCreate}>
-                  {saving ? "Saving..." : "Save & Select"}
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
+        )}
+      </div>
+
+      {showAddModal && (
+        <AddCustomerModal
+          onClose={() => setShowAddModal(false)}
+          onSaved={(created) => {
+            onCustomerCreated(created);
+            onChange(created.id || created._id);
+            setShowAddModal(false);
+          }}
+        />
       )}
-    </div>
+    </>
   );
 }
 
