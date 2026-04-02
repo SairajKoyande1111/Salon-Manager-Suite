@@ -9,7 +9,6 @@ import {
   Briefcase, 
   Tag, 
   BarChart3, 
-  Receipt,
   FileText,
   Settings,
   Scissors
@@ -27,7 +26,6 @@ const navItems = [
   { icon: Briefcase, label: "Staff", href: "/staff" },
   { icon: Tag, label: "Memberships", href: "/memberships" },
   { icon: BarChart3, label: "Reports", href: "/reports" },
-  { icon: Receipt, label: "Expenses", href: "/expenses" },
 ];
 
 export function Sidebar() {

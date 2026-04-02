@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useListCustomers, useCreateCustomer } from "@workspace/api-client-react";
-import { Search, Plus, User, Phone, Calendar, TrendingUp, Eye, Pencil, Trash2, X, Scissors, Package, FileText } from "lucide-react";
+import { Search, Plus, User, Phone, Calendar, TrendingUp, Eye, Pencil, Trash2, X, Scissors, Package, FileText, BadgeCheck } from "lucide-react";
 import { format } from "date-fns";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
@@ -186,10 +186,17 @@ export default function Customers() {
                   <tr key={c.id || c._id} className="hover:bg-muted/20 transition-colors group">
                     <td className="p-4 pl-6">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm">
+                        <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm shrink-0">
                           {c.name.substring(0, 2).toUpperCase()}
                         </div>
-                        <p className="font-semibold text-foreground group-hover:text-primary transition-colors">{c.name}</p>
+                        <div>
+                          <p className="font-semibold text-foreground group-hover:text-primary transition-colors">{c.name}</p>
+                          {c.activeMembership && (
+                            <span className="inline-flex items-center gap-1 mt-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-violet-100 text-violet-700">
+                              <BadgeCheck className="w-2.5 h-2.5" /> {c.activeMembership.membershipName} · till {c.activeMembership.endDate ? new Date(c.activeMembership.endDate).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : ""}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </td>
                     <td className="p-4">

@@ -3,7 +3,7 @@ import { useListServices, useListProducts, useListCustomers, useListStaff, useCr
 import {
   Search, Plus, Trash2, Receipt, CreditCard, Banknote, Smartphone,
   ChevronLeft, Wallet, UserPlus, X, Scissors, Package, Clock,
-  ChevronDown, UserCircle2, Tag, Check
+  ChevronDown, UserCircle2, Tag, Check, BadgeCheck
 } from "lucide-react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
@@ -52,6 +52,9 @@ export default function POS() {
   const [customerSearch, setCustomerSearch] = useState("");
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
   const customerRef = useRef<HTMLDivElement>(null);
+
+  // Customer membership
+  const [customerMembership, setCustomerMembership] = useState<any>(null);
 
   // Add Customer modal
   const [showAddCustomer, setShowAddCustomer] = useState(false);
@@ -148,12 +151,29 @@ export default function POS() {
   const taxAmount = (afterGlobalDiscount * taxPercent) / 100;
   const finalAmount = Math.round(afterGlobalDiscount + taxAmount);
 
+  const fetchCustomerMembership = async (cid: string) => {
+    try {
+      const res = await fetch(`${API_BASE}/customer-memberships/customer/${cid}`);
+      const data = await res.json();
+      setCustomerMembership(data.membership || null);
+    } catch {
+      setCustomerMembership(null);
+    }
+  };
+
   const selectCustomer = (c: any) => {
-    setCustomerId(c.id || c._id);
+    const cid = c.id || c._id;
+    setCustomerId(cid);
     setCustomerName(c.name);
     setCustomerPhone(c.phone);
     setShowCustomerDropdown(false);
     setCustomerSearch("");
+    // Use activeMembership from list data if available, else fetch
+    if (c.activeMembership !== undefined) {
+      setCustomerMembership(c.activeMembership);
+    } else {
+      fetchCustomerMembership(cid);
+    }
   };
 
   const selectWalkIn = () => {
@@ -162,6 +182,7 @@ export default function POS() {
     setCustomerPhone("");
     setShowCustomerDropdown(false);
     setCustomerSearch("");
+    setCustomerMembership(null);
   };
 
   const handleAddCustomer = async (e: React.FormEvent) => {
@@ -335,6 +356,16 @@ export default function POS() {
         {/* Customer Selector */}
         <div className="p-4 border-b border-border bg-muted/20">
           <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-2">Customer</p>
+          {customerMembership && (
+            <div className="mb-2 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-violet-50 border border-violet-200">
+              <BadgeCheck className="w-3.5 h-3.5 text-violet-600 shrink-0" />
+              <span className="text-xs font-semibold text-violet-700">{customerMembership.membershipName}</span>
+              {customerMembership.discountPercent > 0 && (
+                <span className="text-xs text-violet-500">· {customerMembership.discountPercent}% off</span>
+              )}
+              <span className="text-xs text-violet-400 ml-auto">till {new Date(customerMembership.endDate).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</span>
+            </div>
+          )}
           <div className="relative" ref={customerRef}>
             <button
               onClick={() => setShowCustomerDropdown(v => !v)}
@@ -386,6 +417,11 @@ export default function POS() {
                           <p className="font-medium truncate text-xs">{c.name}</p>
                           <p className="text-[11px] text-muted-foreground">{c.phone}</p>
                         </div>
+                        {c.activeMembership && (
+                          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-violet-100 text-violet-700 shrink-0">
+                            <BadgeCheck className="w-2.5 h-2.5" /> {c.activeMembership.membershipName}
+                          </span>
+                        )}
                         {isSelected && <Check className="w-3.5 h-3.5 text-primary shrink-0" />}
                       </button>
                     );

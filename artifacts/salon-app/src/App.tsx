@@ -14,7 +14,6 @@ import Staff from "@/pages/staff";
 import StaffHistory from "@/pages/staff-history";
 import CustomerHistory from "@/pages/customer-history";
 import Products from "@/pages/products";
-import Expenses from "@/pages/expenses";
 import Memberships from "@/pages/memberships";
 import Reports from "@/pages/reports";
 import Invoices from "@/pages/invoices";
@@ -35,7 +34,6 @@ function Router() {
         <Route path="/staff/:staffId/history" component={StaffHistory} />
         <Route path="/customers/:customerId/history" component={CustomerHistory} />
         <Route path="/products" component={Products} />
-        <Route path="/expenses" component={Expenses} />
         <Route path="/memberships" component={Memberships} />
         <Route path="/reports" component={Reports} />
         <Route path="/invoices" component={Invoices} />

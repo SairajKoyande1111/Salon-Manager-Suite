@@ -1,9 +1,10 @@
 import { Router } from "express";
-import { Customer, Appointment, Bill } from "../models/index.js";
+import { format } from "date-fns";
+import { Customer, Appointment, Bill, CustomerMembership } from "../models/index.js";
 
 const router = Router();
 
-// List customers with optional search
+// List customers with optional search (includes active membership)
 router.get("/customers", async (req, res) => {
   const { search } = req.query;
   const query = search
@@ -15,8 +16,23 @@ router.get("/customers", async (req, res) => {
       }
     : {};
   const customers = await Customer.find(query).sort({ createdAt: -1 });
+  const today = format(new Date(), "yyyy-MM-dd");
+  const customerIds = customers.map((c) => c._id.toString());
+  const activeMemberships = await CustomerMembership.find({
+    customerId: { $in: customerIds },
+    isActive: true,
+    endDate: { $gte: today },
+  });
+  const membershipMap: Record<string, any> = {};
+  for (const cm of activeMemberships) {
+    membershipMap[cm.customerId] = { ...cm.toObject(), id: cm._id.toString() };
+  }
   res.json({
-    customers: customers.map((c) => ({ ...c.toObject(), id: c._id.toString() })),
+    customers: customers.map((c) => ({
+      ...c.toObject(),
+      id: c._id.toString(),
+      activeMembership: membershipMap[c._id.toString()] || null,
+    })),
   });
 });
 
@@ -54,18 +70,20 @@ router.get("/customers/:customerId", async (req, res) => {
   const customer = await Customer.findById(customerId);
   if (!customer) return res.status(404).json({ error: "Customer not found" });
 
-  const [bills, appointments] = await Promise.all([
+  const today = format(new Date(), "yyyy-MM-dd");
+  const [bills, appointments, activeMembership] = await Promise.all([
     Bill.find({ customerId: customerId.toString() }).sort({ createdAt: -1 }),
     Appointment.find({ customerId: customerId.toString() }).sort({ appointmentDate: -1 }),
+    CustomerMembership.findOne({ customerId: customerId.toString(), isActive: true, endDate: { $gte: today } }),
   ]);
 
-  // Compute last visit from most recent bill
   const lastVisit = bills.length > 0 ? bills[0].createdAt : null;
 
   res.json({
     ...customer.toObject(),
     id: customer._id.toString(),
     lastVisit,
+    activeMembership: activeMembership ? { ...activeMembership.toObject(), id: activeMembership._id.toString() } : null,
     bills: bills.map((b) => ({ ...b.toObject(), id: b._id.toString() })),
     appointments: appointments.map((a) => ({ ...a.toObject(), id: a._id.toString() })),
   });

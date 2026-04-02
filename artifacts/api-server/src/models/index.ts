@@ -267,3 +267,38 @@ const MembershipSchema = new Schema<IMembership>({
 export const Membership =
   mongoose.models.Membership ||
   mongoose.model<IMembership>("Membership", MembershipSchema);
+
+// ── CustomerMembership ────────────────────────────────────
+export interface ICustomerMembership extends Document {
+  customerId: string;
+  customerName: string;
+  membershipId: string;
+  membershipName: string;
+  price: number;
+  discountPercent: number;
+  benefits: string;
+  startDate: string;
+  endDate: string;
+  isActive: boolean;
+  createdAt: Date;
+}
+
+const CustomerMembershipSchema = new Schema<ICustomerMembership>(
+  {
+    customerId: { type: String, required: true },
+    customerName: { type: String, required: true },
+    membershipId: { type: String, required: true },
+    membershipName: { type: String, required: true },
+    price: { type: Number, required: true },
+    discountPercent: { type: Number, default: 0 },
+    benefits: { type: String, default: "" },
+    startDate: { type: String, required: true },
+    endDate: { type: String, required: true },
+    isActive: { type: Boolean, default: true },
+  },
+  { timestamps: true }
+);
+
+export const CustomerMembership =
+  mongoose.models.CustomerMembership ||
+  mongoose.model<ICustomerMembership>("CustomerMembership", CustomerMembershipSchema);
