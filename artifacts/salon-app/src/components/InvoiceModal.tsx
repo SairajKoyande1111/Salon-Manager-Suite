@@ -186,7 +186,7 @@ export function InvoiceModal({ bill, onClose }: InvoiceModalProps) {
                   <th style={{ padding: "10px 12px", textAlign: "left", fontSize: 10, textTransform: "uppercase", letterSpacing: 1, color: "#7c3aed" }}>Description</th>
                   <th style={{ padding: "10px 12px", textAlign: "center", fontSize: 10, textTransform: "uppercase", letterSpacing: 1, color: "#7c3aed" }}>Qty</th>
                   <th style={{ padding: "10px 12px", textAlign: "right", fontSize: 10, textTransform: "uppercase", letterSpacing: 1, color: "#7c3aed" }}>Rate</th>
-                  <th style={{ padding: "10px 12px", textAlign: "right", fontSize: 10, textTransform: "uppercase", letterSpacing: 1, color: "#7c3aed" }}>Disc%</th>
+                  <th style={{ padding: "10px 12px", textAlign: "right", fontSize: 10, textTransform: "uppercase", letterSpacing: 1, color: "#7c3aed" }}>Disc</th>
                   <th style={{ padding: "10px 12px", textAlign: "right", fontSize: 10, textTransform: "uppercase", letterSpacing: 1, color: "#7c3aed" }}>Amount</th>
                 </tr>
               </thead>
@@ -208,7 +208,7 @@ export function InvoiceModal({ bill, onClose }: InvoiceModalProps) {
                     <td style={{ padding: "11px 12px", textAlign: "center", fontSize: 13 }}>{item.quantity}</td>
                     <td style={{ padding: "11px 12px", textAlign: "right", fontSize: 13 }}>₹{Number(item.price).toLocaleString("en-IN")}</td>
                     <td style={{ padding: "11px 12px", textAlign: "right", fontSize: 13, color: item.discount > 0 ? "#dc2626" : "#9ca3af" }}>
-                      {item.discount > 0 ? `${item.discount}%` : "—"}
+                      {item.discount > 0 ? `−₹${Number(item.discount).toLocaleString("en-IN")}` : "—"}
                     </td>
                     <td style={{ padding: "11px 12px", textAlign: "right", fontSize: 13, fontWeight: 700, color: "#111" }}>
                       ₹{Number(item.total).toLocaleString("en-IN")}

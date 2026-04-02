@@ -17,7 +17,7 @@ type CartItem = {
   name: string;
   price: number;
   quantity: number;
-  discountPct: number;
+  discountAmt: number;
   staffId?: string | null;
   staffName?: string;
 };
@@ -111,7 +111,7 @@ export default function POS() {
         name: item.name,
         price,
         quantity: 1,
-        discountPct: 0,
+        discountAmt: 0,
         staffId: null,
         staffName: "",
       },
@@ -135,12 +135,11 @@ export default function POS() {
 
   const getItemTotal = (item: CartItem) => {
     const base = item.price * item.quantity;
-    const discounted = base * (1 - item.discountPct / 100);
-    return Math.max(0, discounted);
+    return Math.max(0, base - (item.discountAmt || 0));
   };
 
   const getItemDiscountAmt = (item: CartItem) => {
-    return item.price * item.quantity * (item.discountPct / 100);
+    return item.discountAmt || 0;
   };
 
   const subtotal = cart.reduce((acc, item) => acc + getItemTotal(item), 0);
@@ -212,7 +211,7 @@ export default function POS() {
             staffName: item.staffName || null,
             price: item.price,
             quantity: item.quantity,
-            discount: item.discountPct,
+            discount: item.discountAmt,
             total: getItemTotal(item),
           })),
           subtotal,
@@ -466,19 +465,20 @@ export default function POS() {
                         onClick={() => updateCartItem(item.uid, "quantity", item.quantity + 1)}>+</button>
                     </div>
 
-                    {/* Discount % */}
+                    {/* Discount ₹ */}
                     <div className="flex items-center shrink-0 bg-muted/40 border border-border rounded-lg overflow-hidden">
-                      <span className="px-1.5 text-[10px] text-muted-foreground font-medium border-r border-border bg-muted/60">%</span>
+                      <span className="px-1.5 text-[10px] text-muted-foreground font-medium border-r border-border bg-muted/60">₹</span>
                       <input
                         type="number"
-                        min={0} max={100}
+                        min={0}
                         placeholder="0"
-                        value={item.discountPct === 0 ? "" : item.discountPct}
+                        value={item.discountAmt === 0 ? "" : item.discountAmt}
                         onChange={e => {
-                          const val = Math.min(100, Math.max(0, Number(e.target.value) || 0));
-                          updateCartItem(item.uid, "discountPct", val);
+                          const base = item.price * item.quantity;
+                          const val = Math.min(base, Math.max(0, Number(e.target.value) || 0));
+                          updateCartItem(item.uid, "discountAmt", val);
                         }}
-                        className="w-10 text-xs bg-transparent px-1.5 py-1.5 focus:outline-none text-center font-semibold"
+                        className="w-12 text-xs bg-transparent px-1.5 py-1.5 focus:outline-none text-center font-semibold"
                       />
                     </div>
 

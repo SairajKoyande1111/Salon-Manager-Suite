@@ -46,6 +46,7 @@ router.get("/staff/:staffId/work-history", async (req, res) => {
       })),
       totalEarned: assignedItems.reduce((acc: number, item: any) => acc + (item.total || 0), 0),
       paymentMethod: bill.paymentMethod,
+      customerPhone: bill.customerPhone || "",
     };
   });
   res.json({ history });
