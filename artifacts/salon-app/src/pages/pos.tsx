@@ -503,7 +503,7 @@ export default function POS() {
                 <div key={f.key}>
                   <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider text-white/60">{f.label}</label>
                   <input required={f.required} type={f.type} placeholder={f.placeholder}
-                    className="w-full p-3 rounded-xl focus:outline-none border-0 bg-sidebar text-white placeholder:text-white/30"
+                    className={`w-full p-3 rounded-xl focus:outline-none border-0 bg-sidebar text-white placeholder:text-white/30${f.type === "date" ? " [&::-webkit-calendar-picker-indicator]:invert" : ""}`}
                     value={(addForm as any)[f.key]}
                     onChange={e => {
                       let v = e.target.value;
@@ -515,12 +515,6 @@ export default function POS() {
                   {f.key === "phone" && addPhoneError && <p className="text-destructive text-xs mt-1">{addPhoneError}</p>}
                 </div>
               ))}
-              <div>
-                <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider text-white/60">Notes (Optional)</label>
-                <textarea rows={2} placeholder="Any special preferences..."
-                  className="w-full p-3 rounded-xl focus:outline-none border-0 resize-none bg-sidebar text-white placeholder:text-white/30"
-                  value={addForm.notes} onChange={e => setAddForm({ ...addForm, notes: e.target.value })} />
-              </div>
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => { setShowAddCustomer(false); setAddPhoneError(""); }}
                   className="flex-1 py-3 rounded-xl font-semibold transition-colors bg-sidebar text-white hover:bg-sidebar/80">Cancel</button>

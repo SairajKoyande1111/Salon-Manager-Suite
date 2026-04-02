@@ -1,14 +1,18 @@
-import { X, Download, Printer, Scissors, Package, CheckCircle } from "lucide-react";
+import { X, Download } from "lucide-react";
 import { format } from "date-fns";
 
 const SALON = {
-  name: "AT SALON",
-  tagline: "Beauty & Wellness Studio",
-  address: "123, MG Road, Koramangala, Bengaluru – 560034",
-  phone: "+91 98765 43210",
-  email: "hello@atsalon.in",
-  gstin: "29AABCT1332L1ZU",
+  name: "thetouch",
+  tagline: "Unisex Salon",
+  slogan: "Where Style Meets Perfection",
+  address: "Shop B 11, Chanakya building kalubai chowk,\nLodha Casario road Dombivali East",
+  phone: "+91 90210 64849",
+  email: "thetouch@gmail.com",
 };
+
+const LOGO_URL = "/thetouch-logo.jpg";
+
+const poppins = "'Poppins', sans-serif";
 
 interface BillItem {
   type: string;
@@ -42,18 +46,11 @@ interface InvoiceModalProps {
   onClose: () => void;
 }
 
-const PAY_ICONS: Record<string, string> = {
-  cash: "💵",
-  card: "💳",
-  upi: "📱",
-  online: "🌐",
-};
-
 export function InvoiceModal({ bill, onClose }: InvoiceModalProps) {
   const handlePrint = () => {
     const el = document.getElementById("invoice-print-area");
     if (!el) return;
-    const win = window.open("", "_blank", "width=800,height=900");
+    const win = window.open("", "_blank", "width=820,height=960");
     if (!win) return;
     win.document.write(`
       <!DOCTYPE html>
@@ -61,46 +58,48 @@ export function InvoiceModal({ bill, onClose }: InvoiceModalProps) {
       <head>
         <meta charset="UTF-8" />
         <title>Invoice – ${bill.billNumber}</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
         <style>
           * { box-sizing: border-box; margin: 0; padding: 0; }
-          body { font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a2e; background: #fff; }
-          .page { max-width: 720px; margin: 0 auto; padding: 40px; }
-          /* header */
-          .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 28px; }
-          .brand-name { font-size: 28px; font-weight: 800; letter-spacing: 3px; color: #7c3aed; font-family: Georgia, serif; }
-          .brand-tag { font-size: 11px; color: #9f7aea; letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
-          .salon-info { font-size: 11px; color: #666; line-height: 1.7; text-align: right; }
-          .divider { border: none; border-top: 2px solid #7c3aed; margin: 20px 0; }
-          .divider-thin { border: none; border-top: 1px solid #e5e7eb; margin: 16px 0; }
-          /* invoice meta */
-          .meta-row { display: flex; justify-content: space-between; margin-bottom: 24px; }
-          .meta-block h4 { font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: #9ca3af; margin-bottom: 6px; }
-          .meta-block p { font-size: 14px; font-weight: 600; color: #111; }
-          .meta-block .sub { font-size: 12px; color: #666; font-weight: 400; }
-          .badge { display: inline-block; background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; border-radius: 20px; padding: 3px 10px; font-size: 11px; font-weight: 600; margin-top: 4px; }
-          /* table */
+          body { font-family: 'Poppins', sans-serif; color: #111; background: #fff; }
+          .page { max-width: 720px; margin: 0 auto; padding: 48px 40px; }
+          .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+          .logo-circle { width: 72px; height: 72px; border-radius: 50%; overflow: hidden; border: 2px solid #111; background: #000; flex-shrink: 0; }
+          .logo-circle img { width: 100%; height: 100%; object-fit: cover; }
+          .brand-block { margin-left: 14px; }
+          .brand-name { font-size: 22px; font-weight: 800; color: #111; letter-spacing: 1px; }
+          .brand-tag { font-size: 10px; color: #555; letter-spacing: 3px; text-transform: uppercase; margin-top: 2px; }
+          .invoice-label { text-align: right; }
+          .invoice-word { font-size: 32px; font-weight: 800; color: #111; letter-spacing: 4px; text-transform: uppercase; }
+          .invoice-num { font-size: 13px; font-weight: 500; color: #555; margin-top: 4px; }
+          .divider { border: none; border-top: 2px solid #111; margin: 0 0 24px 0; }
+          .divider-thin { border: none; border-top: 1px solid #e5e7eb; margin: 14px 0; }
+          .meta { display: flex; justify-content: space-between; margin-bottom: 32px; }
+          .meta-block h4 { font-size: 9px; text-transform: uppercase; letter-spacing: 2px; color: #999; margin-bottom: 6px; font-weight: 600; }
+          .meta-block p { font-size: 14px; font-weight: 700; color: #111; }
+          .meta-block .sub { font-size: 12px; color: #555; font-weight: 400; margin-top: 2px; }
+          .meta-block .addr { font-size: 11px; color: #555; line-height: 1.7; margin-top: 2px; }
+          .badge-paid { display: inline-block; border: 1.5px solid #111; border-radius: 20px; padding: 2px 12px; font-size: 10px; font-weight: 700; color: #111; text-transform: uppercase; letter-spacing: 1px; margin-top: 6px; }
           .items-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
-          .items-table thead th { background: #f5f3ff; color: #7c3aed; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; padding: 10px 12px; text-align: left; }
+          .items-table thead th { background: #111; color: #fff; font-size: 9px; text-transform: uppercase; letter-spacing: 1.5px; padding: 10px 14px; text-align: left; font-weight: 600; }
           .items-table thead th:last-child { text-align: right; }
-          .items-table tbody td { padding: 11px 12px; font-size: 13px; border-bottom: 1px solid #f3f4f6; vertical-align: top; }
+          .items-table thead th.center { text-align: center; }
+          .items-table tbody td { padding: 12px 14px; font-size: 13px; border-bottom: 1px solid #f0f0f0; vertical-align: top; color: #111; }
           .items-table tbody td:last-child { text-align: right; font-weight: 600; }
-          .item-type { font-size: 10px; color: #9ca3af; text-transform: uppercase; }
-          .item-staff { font-size: 11px; color: #6b7280; margin-top: 2px; }
-          .strike { text-decoration: line-through; color: #9ca3af; font-size: 11px; }
-          /* totals */
-          .totals { margin-left: auto; width: 260px; margin-top: 8px; }
+          .items-table tbody td.center { text-align: center; }
+          .item-staff { font-size: 11px; color: #888; margin-top: 3px; }
+          .totals { margin-left: auto; width: 280px; margin-top: 16px; }
           .totals-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 13px; color: #555; }
-          .totals-row.grand { font-size: 17px; font-weight: 800; color: #7c3aed; border-top: 2px solid #7c3aed; padding-top: 10px; margin-top: 4px; }
-          /* payment */
-          .payment-row { margin-top: 20px; display: flex; align-items: center; gap: 10px; }
-          .pay-badge { background: #ede9fe; color: #6d28d9; border-radius: 8px; padding: 6px 14px; font-size: 13px; font-weight: 600; text-transform: capitalize; }
-          /* footer */
-          .footer { margin-top: 36px; text-align: center; border-top: 1px dashed #e5e7eb; padding-top: 20px; }
-          .footer p { font-size: 12px; color: #9ca3af; line-height: 1.7; }
-          .footer strong { color: #7c3aed; }
-          @media print {
-            body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
-          }
+          .totals-row.discount { color: #111; }
+          .totals-grand { display: flex; justify-content: space-between; padding: 12px 0; font-size: 18px; font-weight: 800; color: #111; border-top: 2px solid #111; margin-top: 6px; }
+          .payment-section { margin-top: 24px; display: flex; align-items: center; gap: 10px; }
+          .pay-label { font-size: 9px; text-transform: uppercase; letter-spacing: 2px; color: #999; font-weight: 600; }
+          .pay-value { border: 1.5px solid #111; border-radius: 6px; padding: 4px 14px; font-size: 12px; font-weight: 700; text-transform: capitalize; color: #111; }
+          .footer { margin-top: 48px; text-align: center; border-top: 1px dashed #ccc; padding-top: 24px; }
+          .footer-main { font-size: 15px; font-weight: 700; color: #111; }
+          .footer-sub { font-size: 11px; color: #888; line-height: 1.8; margin-top: 8px; }
+          @media print { body { print-color-adjust: exact; -webkit-print-color-adjust: exact; } }
         </style>
       </head>
       <body>
@@ -109,108 +108,107 @@ export function InvoiceModal({ bill, onClose }: InvoiceModalProps) {
       </html>
     `);
     win.document.close();
-    setTimeout(() => { win.focus(); win.print(); }, 300);
+    setTimeout(() => { win.focus(); win.print(); }, 500);
   };
 
   const invoiceDate = bill.createdAt ? new Date(bill.createdAt) : new Date();
+  const f = poppins;
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in">
-      <div className="bg-white dark:bg-card rounded-3xl w-full max-w-2xl shadow-2xl max-h-[95vh] flex flex-col">
+      <div className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl max-h-[95vh] flex flex-col" style={{ fontFamily: f }}>
+
         {/* Modal Header */}
-        <div className="px-6 py-4 border-b border-border/50 flex items-center justify-between shrink-0">
-          <h2 className="text-lg font-serif font-bold text-primary">Invoice Preview</h2>
+        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between shrink-0">
+          <h2 className="text-base font-bold text-gray-900" style={{ fontFamily: f }}>Invoice Preview</h2>
           <div className="flex items-center gap-2">
-            <button
-              onClick={handlePrint}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors shadow shadow-primary/20"
-            >
+            <button onClick={handlePrint}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-900 text-white text-sm font-semibold hover:bg-gray-700 transition-colors">
               <Download className="w-4 h-4" /> Download / Print
             </button>
-            <button onClick={onClose} className="p-2 rounded-lg hover:bg-muted transition-colors">
-              <X className="w-5 h-5" />
+            <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
+              <X className="w-5 h-5 text-gray-500" />
             </button>
           </div>
         </div>
 
         {/* Scrollable Invoice */}
-        <div className="overflow-y-auto flex-1 p-6">
-          <div id="invoice-print-area" className="page" style={{ maxWidth: 720, margin: "0 auto", padding: 40, fontFamily: "'Segoe UI', Arial, sans-serif", color: "#1a1a2e", background: "#fff" }}>
+        <div className="overflow-y-auto flex-1 p-6 bg-gray-50">
+          <div id="invoice-print-area" className="page" style={{ maxWidth: 720, margin: "0 auto", padding: "48px 40px", fontFamily: f, color: "#111", background: "#fff", borderRadius: 12 }}>
 
-            {/* Salon Header */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 28 }}>
-              <div>
-                <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: 3, color: "#7c3aed", fontFamily: "Georgia, serif" }}>
-                  {SALON.name}
+            {/* ── HEADER: Logo + Invoice label ── */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 32 }}>
+              {/* Logo + name */}
+              <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                <div style={{ width: 72, height: 72, borderRadius: "50%", overflow: "hidden", border: "2px solid #111", background: "#000", flexShrink: 0 }}>
+                  <img src={LOGO_URL} alt="thetouch logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 </div>
-                <div style={{ fontSize: 11, color: "#9f7aea", letterSpacing: 2, textTransform: "uppercase", marginTop: 2 }}>
-                  {SALON.tagline}
+                <div>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: "#111", letterSpacing: 1, fontFamily: f }}>{SALON.name}</div>
+                  <div style={{ fontSize: 10, color: "#777", letterSpacing: 3, textTransform: "uppercase", marginTop: 2, fontFamily: f }}>{SALON.tagline}</div>
                 </div>
               </div>
-              <div style={{ fontSize: 11, color: "#666", lineHeight: 1.7, textAlign: "right" }}>
-                <div>{SALON.address}</div>
-                <div>{SALON.phone}</div>
-                <div>{SALON.email}</div>
-                <div style={{ marginTop: 2 }}>GSTIN: {SALON.gstin}</div>
+              {/* INVOICE label + number */}
+              <div style={{ textAlign: "right" }}>
+                <div style={{ fontSize: 30, fontWeight: 800, color: "#111", letterSpacing: 5, textTransform: "uppercase", fontFamily: f }}>INVOICE</div>
+                <div style={{ fontSize: 13, fontWeight: 500, color: "#555", marginTop: 4, fontFamily: f }}>#{bill.billNumber}</div>
+                <div style={{ fontSize: 12, color: "#888", marginTop: 2, fontFamily: f }}>{format(invoiceDate, "dd MMM yyyy, hh:mm a")}</div>
               </div>
             </div>
 
-            <hr style={{ border: "none", borderTop: "2px solid #7c3aed", margin: "0 0 20px 0" }} />
+            {/* Divider */}
+            <hr style={{ border: "none", borderTop: "2px solid #111", margin: "0 0 24px 0" }} />
 
-            {/* Invoice Meta + Customer */}
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 24 }}>
+            {/* ── Salon info + Bill To ── */}
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 32 }}>
+              {/* Salon contact */}
               <div>
-                <div style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: 1.5, color: "#9ca3af", marginBottom: 4 }}>Bill To</div>
-                <div style={{ fontSize: 15, fontWeight: 700, color: "#111" }}>{bill.customerName}</div>
-                {bill.customerPhone && (
-                  <div style={{ fontSize: 12, color: "#666", marginTop: 2 }}>📞 {bill.customerPhone}</div>
-                )}
+                <div style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: 2, color: "#999", marginBottom: 6, fontWeight: 600, fontFamily: f }}>From</div>
+                <div style={{ fontSize: 11, color: "#444", lineHeight: 1.8, fontFamily: f, whiteSpace: "pre-line" }}>{SALON.address}</div>
+                <div style={{ fontSize: 11, color: "#444", marginTop: 4, fontFamily: f }}>{SALON.phone}</div>
+                <div style={{ fontSize: 11, color: "#444", fontFamily: f }}>{SALON.email}</div>
               </div>
+              {/* Bill To */}
               <div style={{ textAlign: "right" }}>
-                <div style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: 1.5, color: "#9ca3af", marginBottom: 4 }}>Invoice Details</div>
-                <div style={{ fontSize: 15, fontWeight: 700, color: "#7c3aed" }}>#{bill.billNumber}</div>
-                <div style={{ fontSize: 12, color: "#666", marginTop: 2 }}>
-                  {format(invoiceDate, "dd MMM yyyy, hh:mm a")}
-                </div>
-                <div style={{ display: "inline-block", background: "#f0fdf4", color: "#16a34a", border: "1px solid #bbf7d0", borderRadius: 20, padding: "3px 10px", fontSize: 11, fontWeight: 600, marginTop: 6 }}>
+                <div style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: 2, color: "#999", marginBottom: 6, fontWeight: 600, fontFamily: f }}>Bill To</div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: "#111", fontFamily: f }}>{bill.customerName}</div>
+                {bill.customerPhone && (
+                  <div style={{ fontSize: 12, color: "#555", marginTop: 4, fontFamily: f }}>{bill.customerPhone}</div>
+                )}
+                <div style={{ display: "inline-block", border: "1.5px solid #111", borderRadius: 20, padding: "2px 12px", fontSize: 10, fontWeight: 700, color: "#111", marginTop: 8, textTransform: "uppercase", letterSpacing: 1, fontFamily: f }}>
                   ✓ {bill.status?.toUpperCase() || "PAID"}
                 </div>
               </div>
             </div>
 
-            {/* Items Table */}
+            {/* ── Items Table ── */}
             <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 8 }}>
               <thead>
-                <tr style={{ background: "#f5f3ff" }}>
-                  <th style={{ padding: "10px 12px", textAlign: "left", fontSize: 10, textTransform: "uppercase", letterSpacing: 1, color: "#7c3aed" }}>#</th>
-                  <th style={{ padding: "10px 12px", textAlign: "left", fontSize: 10, textTransform: "uppercase", letterSpacing: 1, color: "#7c3aed" }}>Description</th>
-                  <th style={{ padding: "10px 12px", textAlign: "center", fontSize: 10, textTransform: "uppercase", letterSpacing: 1, color: "#7c3aed" }}>Qty</th>
-                  <th style={{ padding: "10px 12px", textAlign: "right", fontSize: 10, textTransform: "uppercase", letterSpacing: 1, color: "#7c3aed" }}>Rate</th>
-                  <th style={{ padding: "10px 12px", textAlign: "right", fontSize: 10, textTransform: "uppercase", letterSpacing: 1, color: "#7c3aed" }}>Disc</th>
-                  <th style={{ padding: "10px 12px", textAlign: "right", fontSize: 10, textTransform: "uppercase", letterSpacing: 1, color: "#7c3aed" }}>Amount</th>
+                <tr>
+                  <th style={{ background: "#111", color: "#fff", padding: "10px 14px", textAlign: "left", fontSize: 9, textTransform: "uppercase", letterSpacing: 1.5, fontWeight: 600, fontFamily: f }}>#</th>
+                  <th style={{ background: "#111", color: "#fff", padding: "10px 14px", textAlign: "left", fontSize: 9, textTransform: "uppercase", letterSpacing: 1.5, fontWeight: 600, fontFamily: f }}>Description</th>
+                  <th style={{ background: "#111", color: "#fff", padding: "10px 14px", textAlign: "center", fontSize: 9, textTransform: "uppercase", letterSpacing: 1.5, fontWeight: 600, fontFamily: f }}>Qty</th>
+                  <th style={{ background: "#111", color: "#fff", padding: "10px 14px", textAlign: "right", fontSize: 9, textTransform: "uppercase", letterSpacing: 1.5, fontWeight: 600, fontFamily: f }}>Rate</th>
+                  <th style={{ background: "#111", color: "#fff", padding: "10px 14px", textAlign: "right", fontSize: 9, textTransform: "uppercase", letterSpacing: 1.5, fontWeight: 600, fontFamily: f }}>Disc</th>
+                  <th style={{ background: "#111", color: "#fff", padding: "10px 14px", textAlign: "right", fontSize: 9, textTransform: "uppercase", letterSpacing: 1.5, fontWeight: 600, fontFamily: f }}>Amount</th>
                 </tr>
               </thead>
               <tbody>
                 {bill.items.map((item, i) => (
-                  <tr key={i} style={{ borderBottom: "1px solid #f3f4f6" }}>
-                    <td style={{ padding: "11px 12px", fontSize: 13, color: "#9ca3af" }}>{i + 1}</td>
-                    <td style={{ padding: "11px 12px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        <span style={{ fontSize: 12 }}>{item.type === "service" ? "✂️" : "📦"}</span>
-                        <div>
-                          <div style={{ fontSize: 13, fontWeight: 600, color: "#111" }}>{item.name}</div>
-                          {item.staffName && (
-                            <div style={{ fontSize: 11, color: "#6b7280", marginTop: 1 }}>by {item.staffName}</div>
-                          )}
-                        </div>
-                      </div>
+                  <tr key={i} style={{ borderBottom: "1px solid #f0f0f0" }}>
+                    <td style={{ padding: "12px 14px", fontSize: 12, color: "#999", fontFamily: f }}>{i + 1}</td>
+                    <td style={{ padding: "12px 14px", fontFamily: f }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: "#111" }}>{item.name}</div>
+                      {item.staffName && (
+                        <div style={{ fontSize: 11, color: "#888", marginTop: 3 }}>by {item.staffName}</div>
+                      )}
                     </td>
-                    <td style={{ padding: "11px 12px", textAlign: "center", fontSize: 13 }}>{item.quantity}</td>
-                    <td style={{ padding: "11px 12px", textAlign: "right", fontSize: 13 }}>₹{Number(item.price).toLocaleString("en-IN")}</td>
-                    <td style={{ padding: "11px 12px", textAlign: "right", fontSize: 13, color: item.discount > 0 ? "#dc2626" : "#9ca3af" }}>
+                    <td style={{ padding: "12px 14px", textAlign: "center", fontSize: 13, fontFamily: f }}>{item.quantity}</td>
+                    <td style={{ padding: "12px 14px", textAlign: "right", fontSize: 13, fontFamily: f }}>₹{Number(item.price).toLocaleString("en-IN")}</td>
+                    <td style={{ padding: "12px 14px", textAlign: "right", fontSize: 13, color: item.discount > 0 ? "#555" : "#bbb", fontFamily: f }}>
                       {item.discount > 0 ? `−₹${Number(item.discount).toLocaleString("en-IN")}` : "—"}
                     </td>
-                    <td style={{ padding: "11px 12px", textAlign: "right", fontSize: 13, fontWeight: 700, color: "#111" }}>
+                    <td style={{ padding: "12px 14px", textAlign: "right", fontSize: 13, fontWeight: 700, color: "#111", fontFamily: f }}>
                       ₹{Number(item.total).toLocaleString("en-IN")}
                     </td>
                   </tr>
@@ -218,50 +216,50 @@ export function InvoiceModal({ bill, onClose }: InvoiceModalProps) {
               </tbody>
             </table>
 
-            {/* Totals */}
-            <div style={{ marginLeft: "auto", width: 260, marginTop: 12 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", fontSize: 13, color: "#555" }}>
+            {/* ── Totals ── */}
+            <div style={{ marginLeft: "auto", width: 280, marginTop: 16 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", fontSize: 13, color: "#555", fontFamily: f }}>
                 <span>Subtotal</span>
                 <span>₹{Number(bill.subtotal).toLocaleString("en-IN")}</span>
               </div>
               {bill.discountAmount > 0 && (
-                <div style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", fontSize: 13, color: "#dc2626" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", fontSize: 13, color: "#111", fontFamily: f }}>
                   <span>Discount</span>
                   <span>− ₹{Number(bill.discountAmount).toLocaleString("en-IN")}</span>
                 </div>
               )}
               {bill.taxAmount > 0 && (
-                <div style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", fontSize: 13, color: "#555" }}>
-                  <span>Tax ({bill.taxPercent}%)</span>
+                <div style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", fontSize: 13, color: "#555", fontFamily: f }}>
+                  <span>GST ({bill.taxPercent}%)</span>
                   <span>₹{Number(bill.taxAmount).toLocaleString("en-IN")}</span>
                 </div>
               )}
-              <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", fontSize: 17, fontWeight: 800, color: "#7c3aed", borderTop: "2px solid #7c3aed", marginTop: 6 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", padding: "12px 0", fontSize: 18, fontWeight: 800, color: "#111", borderTop: "2px solid #111", marginTop: 6, fontFamily: f }}>
                 <span>Total</span>
                 <span>₹{Number(bill.finalAmount).toLocaleString("en-IN")}</span>
               </div>
             </div>
 
-            {/* Payment */}
-            <div style={{ marginTop: 20, display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ fontSize: 12, color: "#9ca3af", textTransform: "uppercase", letterSpacing: 1 }}>Payment via</span>
-              <span style={{ background: "#ede9fe", color: "#6d28d9", borderRadius: 8, padding: "5px 14px", fontSize: 13, fontWeight: 600, textTransform: "capitalize" }}>
-                {PAY_ICONS[bill.paymentMethod] || "💳"} {bill.paymentMethod}
+            {/* ── Payment Method ── */}
+            <div style={{ marginTop: 24, display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: 2, color: "#999", fontWeight: 600, fontFamily: f }}>Payment via</span>
+              <span style={{ border: "1.5px solid #111", borderRadius: 6, padding: "4px 14px", fontSize: 12, fontWeight: 700, textTransform: "capitalize", color: "#111", fontFamily: f }}>
+                {bill.paymentMethod}
               </span>
             </div>
 
-            {/* Footer */}
-            <div style={{ marginTop: 40, textAlign: "center", borderTop: "1px dashed #e5e7eb", paddingTop: 20 }}>
-              <p style={{ fontSize: 14, color: "#7c3aed", fontWeight: 700, fontFamily: "Georgia, serif" }}>
-                Thank you for choosing AT Salon! 🌸
-              </p>
-              <p style={{ fontSize: 11, color: "#9ca3af", lineHeight: 1.7, marginTop: 6 }}>
-                All services are non-refundable. Products may be exchanged within 7 days of purchase with receipt.<br />
-                For queries: {SALON.phone} | {SALON.email}
-              </p>
-              <p style={{ fontSize: 10, color: "#c4b5fd", marginTop: 12, letterSpacing: 1 }}>
-                Powered by AT SALON Management Suite
-              </p>
+            {/* ── Footer ── */}
+            <div style={{ marginTop: 48, textAlign: "center", borderTop: "1px dashed #ccc", paddingTop: 24 }}>
+              <div style={{ fontSize: 15, fontWeight: 700, color: "#111", fontFamily: f }}>
+                Thank you for choosing thetouch!
+              </div>
+              <div style={{ fontSize: 11, color: "#888", lineHeight: 1.8, marginTop: 8, fontFamily: f }}>
+                All services are non-refundable. Products may be exchanged within 7 days with receipt.<br />
+                {SALON.phone} &nbsp;|&nbsp; {SALON.email}
+              </div>
+              <div style={{ fontSize: 10, color: "#bbb", marginTop: 14, letterSpacing: 2, textTransform: "uppercase", fontFamily: f }}>
+                {SALON.slogan}
+              </div>
             </div>
 
           </div>
