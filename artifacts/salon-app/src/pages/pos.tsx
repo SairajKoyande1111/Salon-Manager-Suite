@@ -10,15 +10,6 @@ import { useToast } from "@/hooks/use-toast";
 
 const API_BASE = "/api";
 
-// Exact sidebar colours from CSS theme
-const DARK   = "#1e1528";   // sidebar bg
-const DARK2  = "#2d1f42";   // sidebar-accent (slightly lighter)
-const DARK3  = "#241832";   // mid-level
-const PINK   = "#ec4699";   // secondary / pink accent
-const WHITE  = "#ffffff";
-const OFF    = "#ebe8f0";   // near-white text on dark
-const MUTED  = "#9d8db0";   // muted text on dark
-
 type CartItem = {
   uid: string;
   type: "service" | "product";
@@ -160,31 +151,34 @@ export default function POS() {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden" style={{ background: WHITE }}>
+    <div className="flex h-screen overflow-hidden bg-background">
 
       {/* ══════════════ LEFT PANEL ══════════════ */}
       <div className="flex-1 flex flex-col min-w-0">
 
-        {/* Top nav — dark */}
-        <div className="shrink-0 px-5 py-3.5 flex items-center gap-4" style={{ background: DARK }}>
+        {/* Top nav — sidebar dark */}
+        <div className="shrink-0 px-5 py-3.5 flex items-center gap-4 bg-sidebar">
           <Link href="/">
-            <button className="w-8 h-8 rounded-xl flex items-center justify-center transition-colors" style={{ background: DARK2, color: OFF }}>
+            <button className="w-8 h-8 rounded-xl flex items-center justify-center transition-colors bg-sidebar-accent text-sidebar-foreground hover:bg-sidebar-accent/80">
               <ChevronLeft className="w-4 h-4" />
             </button>
           </Link>
           <div>
-            <h1 className="font-serif font-bold text-lg leading-tight" style={{ color: WHITE }}>Point of Sale</h1>
-            <p className="text-xs" style={{ color: MUTED }}>New Bill</p>
+            <h1 className="font-serif font-bold text-lg leading-tight text-white">Point of Sale</h1>
+            <p className="text-xs text-sidebar-foreground/50">New Bill</p>
           </div>
 
           <div className="flex-1" />
 
           {/* Services / Products toggle */}
-          <div className="flex gap-1 p-1 rounded-xl" style={{ background: DARK2 }}>
+          <div className="flex gap-1 p-1 rounded-xl bg-sidebar-accent">
             {(["services", "products"] as const).map(tab => (
               <button key={tab} onClick={() => { setActiveTab(tab); setActiveCategory("All"); }}
                 className="px-5 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2"
-                style={{ background: activeTab === tab ? WHITE : "transparent", color: activeTab === tab ? DARK : MUTED }}>
+                style={{
+                  background: activeTab === tab ? "white" : "transparent",
+                  color: activeTab === tab ? "hsl(var(--primary))" : "hsl(var(--sidebar-foreground) / 0.5)"
+                }}>
                 {tab === "services" ? <Scissors className="w-3.5 h-3.5" /> : <Package className="w-3.5 h-3.5" />}
                 <span className="capitalize">{tab}</span>
               </button>
@@ -193,35 +187,36 @@ export default function POS() {
 
           {/* Search */}
           <div className="relative w-52">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: MUTED }} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-sidebar-foreground/40" />
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search..."
-              className="w-full pl-9 pr-3 py-2.5 rounded-xl text-sm focus:outline-none border-0"
-              style={{ background: DARK2, color: OFF }}
+              className="w-full pl-9 pr-3 py-2.5 rounded-xl text-sm focus:outline-none border-0 bg-sidebar-accent text-sidebar-foreground placeholder:text-sidebar-foreground/40"
             />
           </div>
         </div>
 
-        {/* Category pills — dark bar */}
-        <div className="shrink-0 flex gap-2 px-5 py-3 overflow-x-auto" style={{ background: DARK3, borderBottom: `1px solid ${DARK2}` }}>
+        {/* Category pills */}
+        <div className="shrink-0 flex gap-2 px-5 py-3 overflow-x-auto bg-sidebar/90 border-b border-sidebar-border">
           {categories.map((cat: string) => (
             <button key={cat} onClick={() => setActiveCategory(cat)}
               className="px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all"
-              style={activeCategory === cat
-                ? { background: PINK, color: WHITE, boxShadow: `0 2px 10px ${PINK}55` }
-                : { background: DARK2, color: MUTED }}>
+              style={{
+                background: activeCategory === cat ? "hsl(var(--sidebar-primary))" : "hsl(var(--sidebar-accent))",
+                color: activeCategory === cat ? "white" : "hsl(var(--sidebar-foreground) / 0.6)",
+                boxShadow: activeCategory === cat ? "0 2px 10px hsl(var(--sidebar-primary) / 0.4)" : "none"
+              }}>
               {cat}
             </button>
           ))}
         </div>
 
-        {/* Service / Product cards — pure white grid */}
-        <div className="flex-1 overflow-y-auto p-5" style={{ background: "#f7f7f7" }}>
+        {/* Service / Product cards grid */}
+        <div className="flex-1 overflow-y-auto p-5 bg-muted/40">
           {filteredItems.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-48 gap-3">
-              <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: "#ede9f4" }}>
-                <Receipt className="w-6 h-6" style={{ color: MUTED }} />
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-primary/10">
+                <Receipt className="w-6 h-6 text-primary/40" />
               </div>
-              <p className="text-sm font-medium" style={{ color: MUTED }}>No {activeTab} found</p>
+              <p className="text-sm font-medium text-muted-foreground">No {activeTab} found</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
@@ -231,23 +226,22 @@ export default function POS() {
                 const inCart = cart.filter(c => c.itemId === id).length;
                 return (
                   <button key={id} onClick={() => addToCart(item)}
-                    className="relative text-left p-4 rounded-2xl transition-all active:scale-95"
+                    className="relative text-left p-4 rounded-2xl bg-card transition-all active:scale-95 hover:shadow-md"
                     style={{
-                      background: WHITE,
-                      border: inCart > 0 ? `2px solid ${DARK}` : `1.5px solid #e8e4ef`,
-                      boxShadow: inCart > 0 ? `0 4px 16px ${DARK}22` : "0 1px 4px rgba(0,0,0,0.05)",
+                      border: inCart > 0 ? "2px solid hsl(var(--primary))" : "1.5px solid hsl(var(--border))",
+                      boxShadow: inCart > 0 ? "0 4px 16px hsl(var(--primary) / 0.15)" : undefined,
                     }}>
                     {inCart > 0 && (
-                      <span className="absolute top-2.5 right-2.5 w-5 h-5 rounded-full text-white text-[10px] font-bold flex items-center justify-center" style={{ background: DARK }}>
+                      <span className="absolute top-2.5 right-2.5 w-5 h-5 rounded-full text-primary-foreground text-[10px] font-bold flex items-center justify-center bg-primary">
                         {inCart}
                       </span>
                     )}
-                    <p className="text-[10px] font-bold uppercase tracking-wider mb-1.5" style={{ color: MUTED }}>{item.category}</p>
-                    <p className="font-bold text-sm leading-snug mb-3 pr-5 line-clamp-2" style={{ color: "#0f0a1a" }}>{item.name}</p>
+                    <p className="text-[10px] font-bold uppercase tracking-wider mb-1.5 text-muted-foreground">{item.category}</p>
+                    <p className="font-bold text-sm leading-snug mb-3 pr-5 line-clamp-2 text-foreground">{item.name}</p>
                     <div className="flex items-end justify-between">
-                      <p className="text-base font-extrabold" style={{ color: DARK }}>{`₹${price.toLocaleString("en-IN")}`}</p>
+                      <p className="text-base font-extrabold text-primary">{`₹${price.toLocaleString("en-IN")}`}</p>
                       {activeTab === "services" && item.duration && (
-                        <span className="text-[10px] flex items-center gap-0.5" style={{ color: MUTED }}>
+                        <span className="text-[10px] flex items-center gap-0.5 text-muted-foreground">
                           <Clock className="w-3 h-3" />{item.duration}m
                         </span>
                       )}
@@ -261,85 +255,84 @@ export default function POS() {
       </div>
 
       {/* ══════════════ RIGHT PANEL ══════════════ */}
-      <div className="w-[390px] shrink-0 flex flex-col" style={{ background: DARK, borderLeft: `1px solid ${DARK2}` }}>
+      <div className="w-[390px] shrink-0 flex flex-col bg-sidebar border-l border-sidebar-border">
 
         {/* Customer selector */}
-        <div className="px-4 pt-4 pb-3" style={{ borderBottom: `1px solid ${DARK2}` }}>
-          <p className="text-[10px] uppercase tracking-widest font-bold mb-2" style={{ color: MUTED }}>Customer</p>
+        <div className="px-4 pt-4 pb-3 border-b border-sidebar-border">
+          <p className="text-[10px] uppercase tracking-widest font-bold mb-2 text-sidebar-foreground/50">Customer</p>
 
           {customerMembership && (
-            <div className="mb-2 flex items-center gap-1.5 px-3 py-2 rounded-xl" style={{ background: DARK2 }}>
-              <BadgeCheck className="w-3.5 h-3.5 shrink-0" style={{ color: PINK }} />
-              <span className="text-xs font-semibold" style={{ color: OFF }}>{customerMembership.membershipName}</span>
-              {customerMembership.discountPercent > 0 && <span className="text-xs" style={{ color: MUTED }}>· {customerMembership.discountPercent}% off</span>}
-              <span className="text-[10px] ml-auto" style={{ color: MUTED }}>till {new Date(customerMembership.endDate).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })}</span>
+            <div className="mb-2 flex items-center gap-1.5 px-3 py-2 rounded-xl bg-sidebar-accent">
+              <BadgeCheck className="w-3.5 h-3.5 shrink-0 text-sidebar-primary" />
+              <span className="text-xs font-semibold text-sidebar-foreground">{customerMembership.membershipName}</span>
+              {customerMembership.discountPercent > 0 && <span className="text-xs text-sidebar-foreground/50">· {customerMembership.discountPercent}% off</span>}
+              <span className="text-[10px] ml-auto text-sidebar-foreground/40">till {new Date(customerMembership.endDate).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })}</span>
             </div>
           )}
 
           <div className="relative" ref={customerRef}>
             <button onClick={() => setShowCustomerDropdown(v => !v)}
-              className="w-full flex items-center gap-2.5 p-3 rounded-xl text-sm text-left transition-colors"
-              style={{ background: DARK2, border: `1px solid ${showCustomerDropdown ? PINK : "transparent"}` }}>
-              <UserCircle2 className="w-5 h-5 shrink-0" style={{ color: PINK }} />
+              className="w-full flex items-center gap-2.5 p-3 rounded-xl text-sm text-left transition-colors bg-sidebar-accent"
+              style={{ border: `1px solid ${showCustomerDropdown ? "hsl(var(--sidebar-primary))" : "transparent"}` }}>
+              <UserCircle2 className="w-5 h-5 shrink-0 text-sidebar-primary" />
               <div className="flex-1 min-w-0">
-                <p className="font-semibold truncate" style={{ color: WHITE }}>{customerName || "Walk-in Customer"}</p>
-                {customerPhone && <p className="text-xs" style={{ color: MUTED }}>{customerPhone}</p>}
+                <p className="font-semibold truncate text-white">{customerName || "Walk-in Customer"}</p>
+                {customerPhone && <p className="text-xs text-sidebar-foreground/50">{customerPhone}</p>}
               </div>
-              <ChevronDown className={`w-4 h-4 shrink-0 transition-transform ${showCustomerDropdown ? "rotate-180" : ""}`} style={{ color: MUTED }} />
+              <ChevronDown className={`w-4 h-4 shrink-0 transition-transform text-sidebar-foreground/40 ${showCustomerDropdown ? "rotate-180" : ""}`} />
             </button>
 
             {showCustomerDropdown && (
-              <div className="absolute top-full left-0 right-0 mt-1.5 rounded-2xl shadow-2xl z-50 overflow-hidden" style={{ background: DARK2, border: `1px solid ${DARK3}` }}>
-                <div className="p-2" style={{ borderBottom: `1px solid ${DARK3}` }}>
+              <div className="absolute top-full left-0 right-0 mt-1.5 rounded-2xl shadow-2xl z-50 overflow-hidden bg-sidebar-accent border border-sidebar-border">
+                <div className="p-2 border-b border-sidebar-border">
                   <div className="relative">
-                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5" style={{ color: MUTED }} />
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-sidebar-foreground/40" />
                     <input autoFocus type="text" placeholder="Search customer..." value={customerSearch}
                       onChange={e => setCustomerSearch(e.target.value)}
-                      className="w-full pl-8 pr-3 py-2 rounded-lg text-xs focus:outline-none"
-                      style={{ background: DARK, color: OFF, border: "none" }}
+                      className="w-full pl-8 pr-3 py-2 rounded-lg text-xs focus:outline-none bg-sidebar text-sidebar-foreground border-none placeholder:text-sidebar-foreground/40"
                     />
                   </div>
                 </div>
                 <div className="max-h-52 overflow-y-auto">
                   <button onClick={selectWalkIn}
-                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm transition-colors"
-                    style={{ background: !customerId ? `${DARK}80` : "transparent", color: !customerId ? WHITE : OFF }}>
-                    <UserCircle2 className="w-4 h-4 shrink-0" style={{ color: MUTED }} />
+                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm transition-colors hover:bg-sidebar/50"
+                    style={{ background: !customerId ? "hsl(var(--sidebar) / 0.6)" : "transparent", color: !customerId ? "white" : "hsl(var(--sidebar-foreground))" }}>
+                    <UserCircle2 className="w-4 h-4 shrink-0 text-sidebar-foreground/40" />
                     <span>Walk-in Customer</span>
-                    {!customerId && <Check className="w-3.5 h-3.5 ml-auto" style={{ color: PINK }} />}
+                    {!customerId && <Check className="w-3.5 h-3.5 ml-auto text-sidebar-primary" />}
                   </button>
                   {filteredCustomers.map((c: any) => {
                     const cid = c.id || c._id;
                     const sel = customerId === cid;
                     return (
                       <button key={cid} onClick={() => selectCustomer(c)}
-                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm transition-colors"
-                        style={{ background: sel ? `${DARK}80` : "transparent", color: sel ? WHITE : OFF }}>
-                        <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0" style={{ background: DARK, color: OFF }}>
+                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm transition-colors hover:bg-sidebar/50"
+                        style={{ background: sel ? "hsl(var(--sidebar) / 0.6)" : "transparent", color: sel ? "white" : "hsl(var(--sidebar-foreground))" }}>
+                        <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 bg-sidebar text-sidebar-foreground">
                           {c.name.substring(0, 2).toUpperCase()}
                         </div>
                         <div className="flex-1 min-w-0 text-left">
                           <p className="font-medium truncate text-xs">{c.name}</p>
-                          <p className="text-[11px]" style={{ color: MUTED }}>{c.phone}</p>
+                          <p className="text-[11px] text-sidebar-foreground/50">{c.phone}</p>
                         </div>
                         {c.activeMembership && (
-                          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-semibold shrink-0" style={{ background: `${PINK}20`, color: PINK }}>
+                          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-semibold shrink-0 text-sidebar-primary"
+                            style={{ background: "hsl(var(--sidebar-primary) / 0.15)" }}>
                             <BadgeCheck className="w-2.5 h-2.5" /> {c.activeMembership.membershipName}
                           </span>
                         )}
-                        {sel && <Check className="w-3.5 h-3.5 shrink-0" style={{ color: PINK }} />}
+                        {sel && <Check className="w-3.5 h-3.5 shrink-0 text-sidebar-primary" />}
                       </button>
                     );
                   })}
                   {filteredCustomers.length === 0 && customerSearch && (
-                    <p className="px-3 py-3 text-xs text-center" style={{ color: MUTED }}>No customer found</p>
+                    <p className="px-3 py-3 text-xs text-center text-sidebar-foreground/40">No customer found</p>
                   )}
                 </div>
-                <div className="p-2" style={{ borderTop: `1px solid ${DARK3}` }}>
+                <div className="p-2 border-t border-sidebar-border">
                   <button onClick={() => { setShowCustomerDropdown(false); setShowAddCustomer(true); }}
-                    className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-semibold transition-colors"
-                    style={{ background: DARK, color: OFF }}>
-                    <UserPlus className="w-4 h-4" style={{ color: PINK }} /> Add New Customer
+                    className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-semibold transition-colors bg-sidebar text-sidebar-foreground hover:bg-sidebar/80">
+                    <UserPlus className="w-4 h-4 text-sidebar-primary" /> Add New Customer
                   </button>
                 </div>
               </div>
@@ -351,59 +344,56 @@ export default function POS() {
         <div className="flex-1 overflow-y-auto px-3 py-2 space-y-2">
           {cart.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full gap-3">
-              <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: DARK2 }}>
-                <Receipt className="w-6 h-6" style={{ color: MUTED }} />
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-sidebar-accent">
+                <Receipt className="w-6 h-6 text-sidebar-foreground/30" />
               </div>
-              <p className="text-sm font-semibold" style={{ color: OFF }}>Cart is empty</p>
-              <p className="text-xs text-center max-w-36" style={{ color: MUTED }}>Tap a service or product to add it here</p>
+              <p className="text-sm font-semibold text-sidebar-foreground">Cart is empty</p>
+              <p className="text-xs text-center max-w-36 text-sidebar-foreground/40">Tap a service or product to add it here</p>
             </div>
           ) : (
             cart.map((item, idx) => {
               const lineTotal = getItemTotal(item);
               return (
-                <div key={item.uid} className="rounded-2xl overflow-hidden" style={{ background: DARK2 }}>
+                <div key={item.uid} className="rounded-2xl overflow-hidden bg-sidebar-accent">
                   <div className="flex items-start gap-2.5 px-3 pt-3 pb-2">
-                    <div className="w-6 h-6 rounded-full text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5" style={{ background: DARK, color: OFF }}>
+                    <div className="w-6 h-6 rounded-full text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5 bg-sidebar text-sidebar-foreground">
                       {idx + 1}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-bold text-sm leading-tight" style={{ color: WHITE }}>{item.name}</p>
-                      <p className="text-[10px] font-medium mt-0.5 capitalize" style={{ color: MUTED }}>{item.type}</p>
+                      <p className="font-bold text-sm leading-tight text-white">{item.name}</p>
+                      <p className="text-[10px] font-medium mt-0.5 capitalize text-sidebar-foreground/50">{item.type}</p>
                     </div>
-                    <p className="font-extrabold text-sm shrink-0" style={{ color: WHITE }}>₹{lineTotal.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</p>
+                    <p className="font-extrabold text-sm shrink-0 text-white">₹{lineTotal.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</p>
                   </div>
                   <div className="flex items-center gap-2 px-3 pb-3">
                     {/* Staff */}
                     {item.type === "service" && (
                       <select value={item.staffId || ""} onChange={e => updateCartItem(item.uid, "staffId", e.target.value)}
-                        className="flex-1 min-w-0 text-xs rounded-lg px-2 py-1.5 focus:outline-none border-0"
-                        style={{ background: DARK, color: OFF }}>
+                        className="flex-1 min-w-0 text-xs rounded-lg px-2 py-1.5 focus:outline-none border-0 bg-sidebar text-sidebar-foreground">
                         <option value="">Assign staff</option>
                         {staff.map((s: any) => <option key={s.id || s._id} value={s.id || s._id}>{s.name}</option>)}
                       </select>
                     )}
                     {/* Qty */}
-                    <div className="flex items-center rounded-lg overflow-hidden shrink-0" style={{ background: DARK }}>
-                      <button className="w-7 h-7 flex items-center justify-center font-bold transition-colors hover:opacity-70" style={{ color: OFF }}
+                    <div className="flex items-center rounded-lg overflow-hidden shrink-0 bg-sidebar">
+                      <button className="w-7 h-7 flex items-center justify-center font-bold transition-colors hover:opacity-70 text-sidebar-foreground"
                         onClick={() => updateCartItem(item.uid, "quantity", Math.max(1, item.quantity - 1))}>−</button>
-                      <span className="px-2 font-bold text-sm min-w-[1.5rem] text-center" style={{ color: WHITE }}>{item.quantity}</span>
-                      <button className="w-7 h-7 flex items-center justify-center font-bold transition-colors hover:opacity-70" style={{ color: OFF }}
+                      <span className="px-2 font-bold text-sm min-w-[1.5rem] text-center text-white">{item.quantity}</span>
+                      <button className="w-7 h-7 flex items-center justify-center font-bold transition-colors hover:opacity-70 text-sidebar-foreground"
                         onClick={() => updateCartItem(item.uid, "quantity", item.quantity + 1)}>+</button>
                     </div>
                     {/* Discount */}
-                    <div className="flex items-center shrink-0 rounded-lg overflow-hidden" style={{ background: DARK }}>
-                      <span className="px-1.5 text-[10px] font-medium border-r h-full flex items-center py-1.5" style={{ color: MUTED, borderColor: DARK2 }}>₹</span>
+                    <div className="flex items-center shrink-0 rounded-lg overflow-hidden bg-sidebar">
+                      <span className="px-1.5 text-[10px] font-medium border-r h-full flex items-center py-1.5 text-sidebar-foreground/50 border-sidebar-border">₹</span>
                       <input type="number" min={0} placeholder="0"
                         value={item.discountAmt === 0 ? "" : item.discountAmt}
                         onChange={e => { const base = item.price * item.quantity; updateCartItem(item.uid, "discountAmt", Math.min(base, Math.max(0, Number(e.target.value) || 0))); }}
-                        className="w-12 text-xs bg-transparent px-1.5 py-1.5 focus:outline-none text-center font-semibold"
-                        style={{ color: WHITE }}
+                        className="w-12 text-xs bg-transparent px-1.5 py-1.5 focus:outline-none text-center font-semibold text-white"
                       />
                     </div>
                     {/* Remove */}
                     <button onClick={() => removeCartItem(item.uid)}
-                      className="w-7 h-7 shrink-0 flex items-center justify-center rounded-lg transition-colors hover:opacity-70"
-                      style={{ background: DARK, color: MUTED }}>
+                      className="w-7 h-7 shrink-0 flex items-center justify-center rounded-lg transition-colors hover:opacity-70 bg-sidebar text-sidebar-foreground/40">
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
@@ -414,60 +404,61 @@ export default function POS() {
         </div>
 
         {/* ── Bill summary ── */}
-        <div className="shrink-0" style={{ borderTop: `1px solid ${DARK2}` }}>
+        <div className="shrink-0 border-t border-sidebar-border">
           <div className="px-4 pt-4 pb-2 space-y-2.5">
             <div className="flex justify-between text-sm">
-              <span style={{ color: MUTED }}>Subtotal ({cart.length} item{cart.length !== 1 ? "s" : ""})</span>
-              <span className="font-semibold" style={{ color: OFF }}>₹{subtotal.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
+              <span className="text-sidebar-foreground/50">Subtotal ({cart.length} item{cart.length !== 1 ? "s" : ""})</span>
+              <span className="font-semibold text-sidebar-foreground">₹{subtotal.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
             </div>
             {/* Extra Discount */}
             <div className="flex items-center gap-2">
-              <span className="text-sm flex items-center gap-1 shrink-0" style={{ color: MUTED }}>
+              <span className="text-sm flex items-center gap-1 shrink-0 text-sidebar-foreground/50">
                 <Tag className="w-3.5 h-3.5" /> Extra Discount
               </span>
-              <div className="flex items-center ml-auto rounded-lg overflow-hidden" style={{ background: DARK2 }}>
-                <span className="text-[11px] px-1.5 flex items-center py-1.5 border-r" style={{ color: MUTED, borderColor: DARK3 }}>₹</span>
+              <div className="flex items-center ml-auto rounded-lg overflow-hidden bg-sidebar-accent">
+                <span className="text-[11px] px-1.5 flex items-center py-1.5 border-r text-sidebar-foreground/50 border-sidebar-border">₹</span>
                 <input type="number" min={0}
                   value={globalDiscountAmt === 0 ? "" : globalDiscountAmt}
                   onChange={e => setGlobalDiscountAmt(Math.max(0, Number(e.target.value) || 0))}
                   placeholder="0"
-                  className="w-16 text-xs text-center px-1.5 py-1 focus:outline-none bg-transparent font-semibold"
-                  style={{ color: WHITE }}
+                  className="w-16 text-xs text-center px-1.5 py-1 focus:outline-none bg-transparent font-semibold text-white"
                 />
               </div>
-              <span className="text-sm font-medium min-w-[3rem] text-right" style={{ color: globalDiscountAmount > 0 ? PINK : MUTED }}>
+              <span className="text-sm font-medium min-w-[3rem] text-right"
+                style={{ color: globalDiscountAmount > 0 ? "hsl(var(--sidebar-primary))" : "hsl(var(--sidebar-foreground) / 0.4)" }}>
                 {globalDiscountAmount > 0 ? `−₹${globalDiscountAmount.toLocaleString("en-IN", { maximumFractionDigits: 0 })}` : "—"}
               </span>
             </div>
-            {/* GST */}
+            {/* GST toggle */}
             <div className="flex justify-between items-center text-sm">
-              <button onClick={() => setTaxEnabled(t => !t)} className="flex items-center gap-2 transition-colors" style={{ color: MUTED }}>
-                <div className="w-8 h-4 rounded-full relative transition-colors" style={{ background: taxEnabled ? PINK : DARK2 }}>
+              <button onClick={() => setTaxEnabled(t => !t)} className="flex items-center gap-2 transition-colors text-sidebar-foreground/50 hover:text-sidebar-foreground">
+                <div className="w-8 h-4 rounded-full relative transition-colors"
+                  style={{ background: taxEnabled ? "hsl(var(--sidebar-primary))" : "hsl(var(--sidebar-accent))" }}>
                   <div className="w-3 h-3 rounded-full absolute top-0.5 transition-all bg-white" style={{ left: taxEnabled ? "calc(100% - 14px)" : "2px" }} />
                 </div>
                 GST 18%
               </button>
-              <span className="font-medium" style={{ color: taxEnabled ? OFF : MUTED }}>
+              <span className="font-medium" style={{ color: taxEnabled ? "hsl(var(--sidebar-foreground))" : "hsl(var(--sidebar-foreground) / 0.4)" }}>
                 {taxEnabled ? `+₹${taxAmount.toLocaleString("en-IN", { maximumFractionDigits: 0 })}` : "—"}
               </span>
             </div>
             {/* Total */}
-            <div className="flex justify-between items-center pt-2" style={{ borderTop: `1px solid ${DARK2}` }}>
-              <span className="font-bold text-base" style={{ color: WHITE }}>Final Amount</span>
-              <span className="text-2xl font-extrabold" style={{ color: WHITE }}>₹{finalAmount.toLocaleString("en-IN")}</span>
+            <div className="flex justify-between items-center pt-2 border-t border-sidebar-border">
+              <span className="font-bold text-base text-white">Final Amount</span>
+              <span className="text-2xl font-extrabold text-white">₹{finalAmount.toLocaleString("en-IN")}</span>
             </div>
           </div>
 
           {/* Payment Methods */}
           <div className="px-4 pb-3">
-            <p className="text-[10px] uppercase tracking-widest font-bold mb-2" style={{ color: MUTED }}>Payment Method</p>
+            <p className="text-[10px] uppercase tracking-widest font-bold mb-2 text-sidebar-foreground/50">Payment Method</p>
             <div className="grid grid-cols-4 gap-1.5">
               {PAYMENT_METHODS.map(m => (
                 <button key={m.id} onClick={() => setPaymentMethod(m.id as any)}
                   className="py-2.5 flex flex-col items-center gap-1 rounded-xl text-xs font-semibold transition-all"
                   style={paymentMethod === m.id
-                    ? { background: WHITE, color: DARK, boxShadow: "0 2px 8px rgba(0,0,0,0.2)" }
-                    : { background: DARK2, color: MUTED }}>
+                    ? { background: "white", color: "hsl(var(--primary))", boxShadow: "0 2px 8px rgba(0,0,0,0.2)" }
+                    : { background: "hsl(var(--sidebar-accent))", color: "hsl(var(--sidebar-foreground) / 0.6)" }}>
                   <m.icon className="w-4 h-4" />
                   {m.label}
                 </button>
@@ -480,10 +471,10 @@ export default function POS() {
             <button
               onClick={handleGenerateBill}
               disabled={cart.length === 0 || createBill.isPending}
-              className="w-full py-4 rounded-2xl font-bold text-base transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-full py-4 rounded-2xl font-bold text-base transition-all disabled:opacity-40 disabled:cursor-not-allowed text-white"
               style={cart.length > 0
-                ? { background: `linear-gradient(135deg, ${DARK2} 0%, ${PINK} 100%)`, color: WHITE, boxShadow: `0 4px 20px ${PINK}44` }
-                : { background: DARK2, color: MUTED }}>
+                ? { background: "linear-gradient(135deg, hsl(var(--sidebar-accent)) 0%, hsl(var(--sidebar-primary)) 100%)", boxShadow: "0 4px 20px hsl(var(--sidebar-primary) / 0.4)" }
+                : { background: "hsl(var(--sidebar-accent))", color: "hsl(var(--sidebar-foreground) / 0.4)" }}>
               {createBill.isPending ? "Processing..." : cart.length === 0 ? "Add items to generate bill" : `Generate Bill — ₹${finalAmount.toLocaleString("en-IN")}`}
             </button>
           </div>
@@ -493,11 +484,11 @@ export default function POS() {
       {/* ══════════════ Add Customer Modal ══════════════ */}
       {showAddCustomer && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in">
-          <div className="rounded-3xl p-8 w-full max-w-md shadow-2xl" style={{ background: DARK2, border: `1px solid ${DARK3}` }}>
+          <div className="rounded-3xl p-8 w-full max-w-md shadow-2xl bg-sidebar-accent border border-sidebar-border">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-serif font-bold" style={{ color: WHITE }}>New Customer</h2>
+              <h2 className="text-2xl font-serif font-bold text-white">New Customer</h2>
               <button onClick={() => { setShowAddCustomer(false); setAddPhoneError(""); }}
-                className="p-2 rounded-xl transition-colors" style={{ background: DARK, color: MUTED }}>
+                className="p-2 rounded-xl transition-colors bg-sidebar text-sidebar-foreground/60 hover:text-sidebar-foreground">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -508,10 +499,9 @@ export default function POS() {
                 { label: "Date of Birth", key: "dob", type: "date", placeholder: "", required: false },
               ].map(f => (
                 <div key={f.key}>
-                  <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider" style={{ color: MUTED }}>{f.label}</label>
+                  <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider text-sidebar-foreground/50">{f.label}</label>
                   <input required={f.required} type={f.type} placeholder={f.placeholder}
-                    className="w-full p-3 rounded-xl focus:outline-none border-0"
-                    style={{ background: DARK, color: OFF }}
+                    className="w-full p-3 rounded-xl focus:outline-none border-0 bg-sidebar text-sidebar-foreground placeholder:text-sidebar-foreground/30"
                     value={(addForm as any)[f.key]}
                     onChange={e => {
                       let v = e.target.value;
@@ -520,23 +510,21 @@ export default function POS() {
                     }}
                     maxLength={f.key === "phone" ? 10 : undefined}
                   />
-                  {f.key === "phone" && addPhoneError && <p className="text-red-400 text-xs mt-1">{addPhoneError}</p>}
+                  {f.key === "phone" && addPhoneError && <p className="text-destructive text-xs mt-1">{addPhoneError}</p>}
                 </div>
               ))}
               <div>
-                <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider" style={{ color: MUTED }}>Notes (Optional)</label>
+                <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider text-sidebar-foreground/50">Notes (Optional)</label>
                 <textarea rows={2} placeholder="Any special preferences..."
-                  className="w-full p-3 rounded-xl focus:outline-none border-0 resize-none"
-                  style={{ background: DARK, color: OFF }}
+                  className="w-full p-3 rounded-xl focus:outline-none border-0 resize-none bg-sidebar text-sidebar-foreground placeholder:text-sidebar-foreground/30"
                   value={addForm.notes} onChange={e => setAddForm({ ...addForm, notes: e.target.value })} />
               </div>
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => { setShowAddCustomer(false); setAddPhoneError(""); }}
-                  className="flex-1 py-3 rounded-xl font-semibold transition-colors"
-                  style={{ background: DARK, color: OFF }}>Cancel</button>
+                  className="flex-1 py-3 rounded-xl font-semibold transition-colors bg-sidebar text-sidebar-foreground hover:bg-sidebar/80">Cancel</button>
                 <button type="submit" disabled={addLoading}
                   className="flex-1 py-3 rounded-xl font-semibold text-white disabled:opacity-50 transition-all"
-                  style={{ background: `linear-gradient(135deg, ${DARK} 0%, ${PINK} 100%)`, boxShadow: `0 4px 16px ${PINK}40` }}>
+                  style={{ background: "linear-gradient(135deg, hsl(var(--sidebar)) 0%, hsl(var(--sidebar-primary)) 100%)", boxShadow: "0 4px 16px hsl(var(--sidebar-primary) / 0.4)" }}>
                   {addLoading ? "Saving..." : "Add & Select"}
                 </button>
               </div>

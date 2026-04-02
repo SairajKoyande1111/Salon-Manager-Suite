@@ -88,7 +88,7 @@
 
   --primary: 280 60% 22%;
   --primary-foreground: 35 100% 95%;
-
+  
   --secondary: 15 40% 60%;
   --secondary-foreground: 0 0% 100%;
 
@@ -104,7 +104,7 @@
   --app-font-sans: 'Outfit', sans-serif;
   --app-font-serif: 'Cinzel', serif;
   --app-font-mono: Menlo, monospace;
-
+  
   --radius: 0.75rem;
 
   --shadow-2xs: 0px 2px 0px 0px hsl(280 60% 20% / 0.05);
@@ -135,7 +135,7 @@
   }
 }
 
-/* Custom Scrollbar */
+/* Custom Scrollbar for POS */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
