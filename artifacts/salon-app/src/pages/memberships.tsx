@@ -427,7 +427,7 @@ export default function Memberships() {
               </div>
               <div>
                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">Service Discount (%)</label>
-                <input type="number" min="0" max="100" placeholder="e.g. 15"
+                <input type="text" inputMode="decimal" placeholder="e.g. 15"
                   value={planForm.discountPercent} onChange={e => setPlanForm(p => ({ ...p, discountPercent: e.target.value }))}
                   className="w-full p-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-secondary/40 outline-none" />
                 <p className="text-[11px] text-muted-foreground mt-1">Leave blank if no discount applies</p>
@@ -468,18 +468,8 @@ export default function Memberships() {
               {/* Customer search */}
               <div>
                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">Select Customer *</label>
-                <div className="relative mb-2">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <input
-                    type="text"
-                    placeholder="Search by name or phone..."
-                    value={customerSearch}
-                    onChange={e => { setCustomerSearch(e.target.value); setSelectedCustomer(null); }}
-                    className="w-full pl-9 pr-3 p-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-secondary/40 outline-none"
-                  />
-                </div>
                 {selectedCustomer ? (
-                  <div className="flex items-center gap-2.5 p-3 rounded-xl bg-primary/5 border border-primary/20">
+                  <div className="flex items-center gap-2.5 p-3 rounded-xl bg-primary/5 border border-primary/20 mb-2">
                     <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold shrink-0">
                       {selectedCustomer.name.substring(0, 2).toUpperCase()}
                     </div>
@@ -487,37 +477,52 @@ export default function Memberships() {
                       <p className="font-semibold text-sm">{selectedCustomer.name}</p>
                       <p className="text-xs text-muted-foreground">{selectedCustomer.phone}</p>
                     </div>
-                    <Check className="w-4 h-4 text-primary" />
+                    <button type="button" onClick={() => { setSelectedCustomer(null); setCustomerSearch(""); }}
+                      className="text-xs text-muted-foreground hover:text-destructive px-2 py-1 rounded-lg hover:bg-destructive/10 transition-colors">
+                      Change
+                    </button>
                   </div>
-                ) : customerSearch ? (
-                  <div className="border border-border rounded-xl overflow-hidden max-h-44 overflow-y-auto">
-                    {filteredCustomers.length === 0 ? (
-                      <p className="text-center py-4 text-sm text-muted-foreground">No customers found</p>
-                    ) : (
-                      filteredCustomers.slice(0, 8).map((c: any) => (
-                        <button
-                          key={c.id || c._id}
-                          type="button"
-                          onClick={() => { setSelectedCustomer(c); setCustomerSearch(""); }}
-                          className="w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-muted/50 transition-colors text-left border-b border-border/40 last:border-0"
-                        >
-                          <div className="w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold shrink-0">
-                            {c.name.substring(0, 2).toUpperCase()}
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium">{c.name}</p>
-                            <p className="text-xs text-muted-foreground">{c.phone}</p>
-                          </div>
-                          {c.activeMembership && (
-                            <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded bg-violet-100 text-violet-700 font-medium">
-                              {c.activeMembership.membershipName}
-                            </span>
-                          )}
-                        </button>
-                      ))
-                    )}
-                  </div>
-                ) : null}
+                ) : (
+                  <>
+                    <div className="relative mb-2">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <input
+                        type="text"
+                        placeholder="Search by name or phone..."
+                        value={customerSearch}
+                        onChange={e => setCustomerSearch(e.target.value)}
+                        className="w-full pl-9 pr-3 p-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-secondary/40 outline-none"
+                      />
+                    </div>
+                    <div className="border border-border rounded-xl overflow-hidden max-h-44 overflow-y-auto">
+                      {filteredCustomers.length === 0 ? (
+                        <p className="text-center py-4 text-sm text-muted-foreground">No customers found</p>
+                      ) : (
+                        filteredCustomers.slice(0, 5).map((c: any) => (
+                          <button
+                            key={c.id || c._id}
+                            type="button"
+                            onClick={() => { setSelectedCustomer(c); setCustomerSearch(""); }}
+                            className="w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-muted/50 transition-colors text-left border-b border-border/40 last:border-0"
+                          >
+                            <div className="w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold shrink-0">
+                              {c.name.substring(0, 2).toUpperCase()}
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-sm font-medium">{c.name}</p>
+                              <p className="text-xs text-muted-foreground">{c.phone}</p>
+                            </div>
+                            {c.activeMembership && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-violet-100 text-violet-700 font-medium">
+                                {c.activeMembership.membershipName}
+                              </span>
+                            )}
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Start Date */}
