@@ -46,7 +46,7 @@ export default function POS() {
   const [customerPhone, setCustomerPhone] = useState<string>("");
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "upi" | "card" | "wallet">("upi");
   const [taxEnabled, setTaxEnabled] = useState(false);
-  const [globalDiscountPct, setGlobalDiscountPct] = useState(0);
+  const [globalDiscountAmt, setGlobalDiscountAmt] = useState(0);
 
   // Customer dropdown state
   const [customerSearch, setCustomerSearch] = useState("");
@@ -144,7 +144,7 @@ export default function POS() {
   };
 
   const subtotal = cart.reduce((acc, item) => acc + getItemTotal(item), 0);
-  const globalDiscountAmount = subtotal * (globalDiscountPct / 100);
+  const globalDiscountAmount = Math.min(globalDiscountAmt, subtotal);
   const afterGlobalDiscount = Math.max(0, subtotal - globalDiscountAmount);
   const taxAmount = (afterGlobalDiscount * taxPercent) / 100;
   const finalAmount = Math.round(afterGlobalDiscount + taxAmount);
@@ -231,7 +231,7 @@ export default function POS() {
           setCustomerId("");
           setCustomerName("Walk-in Customer");
           setCustomerPhone("");
-          setGlobalDiscountPct(0);
+          setGlobalDiscountAmt(0);
         },
         onError: () => {
           toast({ title: "Failed to generate bill", variant: "destructive" });
@@ -312,12 +312,7 @@ export default function POS() {
                         {inCart}
                       </span>
                     )}
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 transition-all ${activeTab === "services" ? "bg-primary/10 group-hover:bg-primary/20" : "bg-secondary/10 group-hover:bg-secondary/20"}`}>
-                      {activeTab === "services"
-                        ? <Scissors className="w-5 h-5 text-primary" />
-                        : <Package className="w-5 h-5 text-secondary" />}
-                    </div>
-                    <p className="font-semibold text-sm text-foreground leading-snug mb-1 line-clamp-2">{item.name}</p>
+                    <p className="font-semibold text-sm text-foreground leading-snug mb-1 line-clamp-2 pr-6">{item.name}</p>
                     <p className="text-[11px] text-muted-foreground mb-2.5">{item.category}</p>
                     <div className="flex items-end justify-between">
                       <p className="text-base font-bold text-primary">₹{price.toLocaleString("en-IN")}</p>
@@ -326,9 +321,6 @@ export default function POS() {
                           <Clock className="w-3 h-3" />{item.duration}m
                         </span>
                       )}
-                    </div>
-                    <div className="absolute inset-0 rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                      <div className="bg-primary/5 rounded-2xl absolute inset-0" />
                     </div>
                   </button>
                 );
@@ -435,13 +427,8 @@ export default function POS() {
                 <div key={item.uid} className="bg-background rounded-xl border border-border overflow-hidden">
                   {/* Item Header */}
                   <div className="flex items-start gap-2 p-3 pb-2">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${item.type === "service" ? "bg-primary/10" : "bg-secondary/10"}`}>
-                      {item.type === "service"
-                        ? <Scissors className="w-4 h-4 text-primary" />
-                        : <Package className="w-4 h-4 text-secondary" />}
-                    </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm leading-tight truncate">{item.name}</p>
+                      <p className="font-semibold text-sm leading-tight">{item.name}</p>
                       <p className="text-[11px] text-muted-foreground capitalize">{item.type}</p>
                     </div>
                     <div className="text-right shrink-0">
@@ -520,18 +507,18 @@ export default function POS() {
 
             {/* Global Discount Row */}
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground flex items-center gap-1">
+              <span className="text-sm text-muted-foreground flex items-center gap-1 shrink-0">
                 <Tag className="w-3.5 h-3.5" /> Extra Discount
               </span>
               <div className="flex items-center ml-auto bg-card border border-border rounded-lg overflow-hidden">
+                <span className="text-[11px] px-1.5 text-muted-foreground bg-muted/50 border-r border-border h-full flex items-center py-1.5">₹</span>
                 <input
-                  type="number" min={0} max={100}
-                  value={globalDiscountPct === 0 ? "" : globalDiscountPct}
-                  onChange={e => setGlobalDiscountPct(Math.min(100, Math.max(0, Number(e.target.value) || 0)))}
+                  type="number" min={0}
+                  value={globalDiscountAmt === 0 ? "" : globalDiscountAmt}
+                  onChange={e => setGlobalDiscountAmt(Math.max(0, Number(e.target.value) || 0))}
                   placeholder="0"
-                  className="w-10 text-xs text-center px-1.5 py-1 focus:outline-none bg-transparent font-semibold"
+                  className="w-16 text-xs text-center px-1.5 py-1 focus:outline-none bg-transparent font-semibold"
                 />
-                <span className="text-[10px] px-1.5 text-muted-foreground bg-muted/50 border-l border-border h-full flex items-center">%</span>
               </div>
               <span className="text-sm font-medium text-red-500 min-w-[3rem] text-right">
                 {globalDiscountAmount > 0 ? `−₹${globalDiscountAmount.toLocaleString("en-IN", { maximumFractionDigits: 0 })}` : "—"}
@@ -554,7 +541,7 @@ export default function POS() {
             {/* Final */}
             <div className="pt-2 border-t border-border flex justify-between items-center">
               <span className="font-bold text-base">Total</span>
-              <span className="text-2xl font-bold text-primary font-serif">₹{finalAmount.toLocaleString("en-IN")}</span>
+              <span className="text-2xl font-bold text-primary">&#8377;{finalAmount.toLocaleString("en-IN")}</span>
             </div>
           </div>
 

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { Staff } from "../models/index.js";
+import { Staff, Bill } from "../models/index.js";
 
 const router = Router();
 
@@ -24,6 +24,31 @@ router.post("/staff", async (req, res) => {
     avatarInitials,
   });
   res.status(201).json({ ...member.toObject(), id: member._id.toString() });
+});
+
+router.get("/staff/:staffId/work-history", async (req, res) => {
+  const { staffId } = req.params;
+  const bills = await Bill.find({ "items.staffId": staffId }).sort({ createdAt: -1 });
+  const history = bills.map((bill: any) => {
+    const assignedItems = bill.items.filter((item: any) => item.staffId?.toString() === staffId);
+    return {
+      billId: bill._id.toString(),
+      billNumber: bill.billNumber,
+      date: bill.createdAt,
+      customerName: bill.customerName,
+      items: assignedItems.map((item: any) => ({
+        name: item.name,
+        type: item.type,
+        quantity: item.quantity,
+        price: item.price,
+        discount: item.discount,
+        total: item.total,
+      })),
+      totalEarned: assignedItems.reduce((acc: number, item: any) => acc + (item.total || 0), 0),
+      paymentMethod: bill.paymentMethod,
+    };
+  });
+  res.json({ history });
 });
 
 export default router;
