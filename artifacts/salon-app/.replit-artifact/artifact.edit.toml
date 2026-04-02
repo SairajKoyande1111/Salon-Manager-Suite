@@ -1,0 +1,30 @@
+kind = "web"
+  previewPath = "/"
+  title = "Salon Management App"
+  version = "1.0.0"
+  id = "salon-app-main"
+
+  [[services]]
+  localPort = 5173
+  name = "Salon App"
+  paths = ["/"]
+
+  [services.env]
+  PORT = "5173"
+  BASE_PATH = "/"
+
+  [services.development]
+  run = "pnpm --filter @workspace/salon-app run dev"
+
+  [services.production]
+
+  [services.production.build]
+  args = ["pnpm", "--filter", "@workspace/salon-app", "run", "build"]
+
+  [services.production.build.env]
+  NODE_ENV = "production"
+  BASE_PATH = "/"
+
+  [services.production.serve]
+  dir = "artifacts/salon-app/dist/public"
+  
