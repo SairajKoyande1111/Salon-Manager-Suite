@@ -73,23 +73,31 @@ export interface IProduct extends Document {
   name: string;
   category: string;
   brand?: string;
+  description?: string;
   stockQuantity: number;
   costPrice?: number;
   sellingPrice: number;
   lowStockThreshold: number;
   isLowStock: boolean;
+  dateAdded?: Date;
+  expiryDate?: string;
 }
 
-const ProductSchema = new Schema<IProduct>({
-  name: { type: String, required: true },
-  category: { type: String, required: true },
-  brand: String,
-  stockQuantity: { type: Number, default: 0 },
-  costPrice: Number,
-  sellingPrice: { type: Number, required: true },
-  lowStockThreshold: { type: Number, default: 5 },
-  isLowStock: { type: Boolean, default: false },
-});
+const ProductSchema = new Schema<IProduct>(
+  {
+    name: { type: String, required: true },
+    category: { type: String, required: true },
+    brand: String,
+    description: String,
+    stockQuantity: { type: Number, default: 0 },
+    costPrice: Number,
+    sellingPrice: { type: Number, required: true },
+    lowStockThreshold: { type: Number, default: 5 },
+    isLowStock: { type: Boolean, default: false },
+    expiryDate: String,
+  },
+  { timestamps: true }
+);
 
 export const Product =
   mongoose.models.Product ||
