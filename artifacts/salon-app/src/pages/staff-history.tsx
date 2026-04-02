@@ -234,7 +234,7 @@ export default function StaffHistory() {
 
                     {/* Amount */}
                     <div className="shrink-0 text-right">
-                      <p className="text-xs text-muted-foreground">Earned</p>
+                      <p className="text-xs text-muted-foreground">Bill</p>
                       <p className="font-bold text-primary">₹{entry.totalEarned.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</p>
                     </div>
 
@@ -251,16 +251,8 @@ export default function StaffHistory() {
                   {/* Services */}
                   <div className="px-5 py-3 flex flex-wrap gap-2">
                     {entry.items.map((item: any, j: number) => (
-                      <div key={j} className="flex items-center gap-1.5 bg-muted/50 rounded-lg px-3 py-1.5 text-xs">
-                        {item.type === "service"
-                          ? <Scissors className="w-3 h-3 text-primary" />
-                          : <Package className="w-3 h-3 text-secondary" />}
-                        <span className="font-medium">{item.name}</span>
-                        {item.quantity > 1 && <span className="text-muted-foreground">×{item.quantity}</span>}
-                        {item.discount > 0 && (
-                          <span className="text-orange-500 ml-1">−₹{Number(item.discount).toLocaleString("en-IN")}</span>
-                        )}
-                        <span className="font-semibold text-primary ml-1">₹{(item.total || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
+                      <div key={j} className="bg-muted/50 rounded-lg px-3 py-1.5 text-xs font-medium text-foreground">
+                        {item.name}{item.quantity > 1 ? ` ×${item.quantity}` : ""}
                       </div>
                     ))}
                     <div className="ml-auto flex items-center gap-1.5 text-xs text-muted-foreground">

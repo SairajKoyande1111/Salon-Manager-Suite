@@ -12,6 +12,7 @@ import POS from "@/pages/pos";
 import Services from "@/pages/services";
 import Staff from "@/pages/staff";
 import StaffHistory from "@/pages/staff-history";
+import CustomerHistory from "@/pages/customer-history";
 import Products from "@/pages/products";
 import Expenses from "@/pages/expenses";
 import Memberships from "@/pages/memberships";
@@ -32,6 +33,7 @@ function Router() {
         <Route path="/services" component={Services} />
         <Route path="/staff" component={Staff} />
         <Route path="/staff/:staffId/history" component={StaffHistory} />
+        <Route path="/customers/:customerId/history" component={CustomerHistory} />
         <Route path="/products" component={Products} />
         <Route path="/expenses" component={Expenses} />
         <Route path="/memberships" component={Memberships} />

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useListCustomers, useCreateCustomer } from "@workspace/api-client-react";
 import { Search, Plus, User, Phone, Calendar, TrendingUp, Eye, Pencil, Trash2, X, Scissors, Package, FileText } from "lucide-react";
 import { format } from "date-fns";
+import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { InvoiceModal } from "@/components/InvoiceModal";
 
@@ -215,14 +216,15 @@ export default function Customers() {
                     </td>
                     <td className="p-4">
                       <div className="flex items-center gap-1.5">
-                        {/* View */}
-                        <button
-                          onClick={() => openView(c.id || c._id)}
-                          title="View Profile"
-                          className="p-2 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
+                        {/* View History */}
+                        <Link href={`/customers/${c.id || c._id}/history`}>
+                          <button
+                            title="View Visit History"
+                            className="p-2 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                        </Link>
                         {/* Edit */}
                         <button
                           onClick={() => openEdit(c)}
