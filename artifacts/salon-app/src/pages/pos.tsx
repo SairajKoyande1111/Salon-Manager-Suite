@@ -200,18 +200,20 @@ export default function POS() {
         </div>
 
         {/* Category pills */}
-        <div className="shrink-0 flex gap-2 px-5 py-3 overflow-x-auto bg-sidebar/90 border-b border-sidebar-border">
-          {categories.map((cat: string) => (
-            <button key={cat} onClick={() => setActiveCategory(cat)}
-              className="px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all"
-              style={{
-                background: activeCategory === cat ? "hsl(var(--sidebar-primary))" : "hsl(var(--sidebar-accent))",
-                color: "white",
-                boxShadow: activeCategory === cat ? "0 2px 10px hsl(var(--sidebar-primary) / 0.4)" : "none"
-              }}>
-              {cat}
-            </button>
-          ))}
+        <div className="shrink-0 bg-sidebar/90 border-b border-sidebar-border">
+          <div className="flex gap-2 px-5 py-3 overflow-x-auto" style={{ scrollbarWidth: "none", msOverflowStyle: "none", flexWrap: "nowrap" }}>
+            {categories.map((cat: string) => (
+              <button key={cat} onClick={() => setActiveCategory(cat)}
+                className="px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all shrink-0"
+                style={{
+                  background: activeCategory === cat ? "hsl(var(--sidebar-primary))" : "hsl(var(--sidebar-accent))",
+                  color: "white",
+                  boxShadow: activeCategory === cat ? "0 2px 10px hsl(var(--sidebar-primary) / 0.4)" : "none"
+                }}>
+                {cat}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Service / Product cards grid */}

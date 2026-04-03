@@ -413,26 +413,40 @@ function AppointmentCard({ appt, onStatusChange, onEdit, onDelete }: {
 function MultiServiceSelect({ selectedIds, onChange, services }: {
   selectedIds: string[]; onChange: (ids: string[]) => void; services: any[];
 }) {
-  const [addingService, setAddingService] = useState(false);
-  const [tempId, setTempId] = useState("");
+  const [searchText, setSearchText] = useState("");
+  const [showDropdown, setShowDropdown] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const selectedServices = selectedIds.map(id => services.find(s => (s.id || s._id) === id)).filter(Boolean);
   const available = services.filter(s => !selectedIds.includes(s.id || s._id));
+  const filtered = searchText
+    ? available.filter(s => s.name.toLowerCase().includes(searchText.toLowerCase()))
+    : available;
 
-  const handleAdd = () => {
-    if (tempId && !selectedIds.includes(tempId)) {
-      onChange([...selectedIds, tempId]);
+  const handleAdd = (id?: string) => {
+    const targetId = id || (filtered.length === 1 ? (filtered[0].id || filtered[0]._id) : "");
+    if (targetId && !selectedIds.includes(targetId)) {
+      onChange([...selectedIds, targetId]);
+      setSearchText("");
+      inputRef.current?.focus();
     }
-    setTempId("");
-    setAddingService(false);
   };
 
   const handleRemove = (id: string) => onChange(selectedIds.filter(i => i !== id));
 
+  useEffect(() => {
+    const h = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) setShowDropdown(false);
+    };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, []);
+
   return (
-    <div className="space-y-2">
+    <div className="space-y-2" ref={containerRef}>
       {selectedServices.length > 0 && (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-1.5">
           {selectedServices.map((svc: any) => (
             <span key={svc.id || svc._id}
               className="flex items-center gap-1.5 bg-primary/10 text-primary px-2.5 py-1 rounded-full text-xs font-semibold">
@@ -445,28 +459,40 @@ function MultiServiceSelect({ selectedIds, onChange, services }: {
           ))}
         </div>
       )}
-      {addingService ? (
-        <div className="flex gap-2">
-          <div className="flex-1">
-            <SearchSelect placeholder="Select service to add" value={tempId}
-              onChange={setTempId}
-              options={available} getLabel={(s) => s.name} getId={(s) => s.id || s._id} />
-          </div>
-          <button type="button" onClick={handleAdd} disabled={!tempId}
-            className="px-3 py-2 rounded-xl bg-primary text-white text-xs font-semibold disabled:opacity-40 hover:bg-primary/90 transition-colors">
-            Add
-          </button>
-          <button type="button" onClick={() => { setAddingService(false); setTempId(""); }}
-            className="px-3 py-2 rounded-xl border border-border text-xs font-semibold hover:bg-muted transition-colors">
-            Cancel
-          </button>
+      <div className="relative flex gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+          <input
+            ref={inputRef}
+            type="text"
+            placeholder="Search and add service..."
+            value={searchText}
+            onChange={e => { setSearchText(e.target.value); setShowDropdown(true); }}
+            onFocus={() => setShowDropdown(true)}
+            className="w-full pl-8 pr-3 py-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-primary/40 outline-none"
+          />
+          {showDropdown && filtered.length > 0 && (
+            <div className="absolute z-20 w-full mt-1 bg-card border border-border/60 rounded-xl shadow-xl overflow-hidden max-h-44 overflow-y-auto">
+              {filtered.map(s => (
+                <button key={s.id || s._id} type="button"
+                  className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted/60 transition-colors font-medium"
+                  onMouseDown={e => { e.preventDefault(); handleAdd(s.id || s._id); setShowDropdown(false); }}>
+                  {s.name}
+                </button>
+              ))}
+            </div>
+          )}
+          {showDropdown && filtered.length === 0 && searchText && (
+            <div className="absolute z-20 w-full mt-1 bg-card border border-border/60 rounded-xl shadow-xl overflow-hidden">
+              <p className="px-4 py-3 text-sm text-muted-foreground text-center">No services found</p>
+            </div>
+          )}
         </div>
-      ) : (
-        <button type="button" onClick={() => setAddingService(true)}
-          className="flex items-center gap-1.5 text-xs text-primary font-semibold hover:bg-primary/5 px-2.5 py-1.5 rounded-lg transition-colors border border-dashed border-primary/40">
-          <Plus className="w-3.5 h-3.5" /> Add Service
+        <button type="button" onClick={() => handleAdd()} disabled={filtered.length === 0}
+          className="px-4 py-2.5 rounded-xl bg-primary text-white text-xs font-semibold disabled:opacity-40 hover:bg-primary/90 transition-colors shrink-0">
+          Add
         </button>
-      )}
+      </div>
     </div>
   );
 }
@@ -518,10 +544,9 @@ function BookingModal({ onClose, onSuccess, customers: initialCustomers, staff, 
             {serviceIds.length === 0 && <p className="text-xs text-muted-foreground mt-1">Add at least one service</p>}
           </div>
           <div>
-            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">Staff *</label>
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">Staff (optional)</label>
             <SearchSelect placeholder="Select staff member" value={form.staffId} onChange={(id) => set("staffId", id)}
               options={staff} getLabel={(s) => s.name} getId={(s) => s.id || s._id} />
-            <input type="text" required value={form.staffId} onChange={() => {}} className="sr-only" tabIndex={-1} aria-hidden />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -543,7 +568,7 @@ function BookingModal({ onClose, onSuccess, customers: initialCustomers, staff, 
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={onClose}
               className="flex-1 py-3 rounded-xl border border-border font-semibold text-sm hover:bg-muted transition-colors">Cancel</button>
-            <button type="submit" disabled={isLoading || serviceIds.length === 0 || !form.staffId}
+            <button type="submit" disabled={isLoading || serviceIds.length === 0}
               className="flex-1 py-3 rounded-xl bg-primary text-white font-bold text-sm shadow-lg disabled:opacity-50 hover:bg-primary/90 transition-colors">
               {isLoading ? "Booking..." : "Confirm Booking"}
             </button>
@@ -695,6 +720,8 @@ function DeleteConfirm({ appt, onClose, onConfirm }: {
   );
 }
 
+const APPT_PAGE_SIZE = 10;
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function Appointments() {
   const { toast } = useToast();
@@ -704,6 +731,7 @@ export default function Appointments() {
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [editingAppt, setEditingAppt] = useState<any>(null);
   const [deletingAppt, setDeletingAppt] = useState<any>(null);
+  const [apptPage, setApptPage] = useState(1);
 
   const [dayAppointments, setDayAppointments] = useState<any[]>([]);
   const [dayLoading, setDayLoading] = useState(false);
@@ -786,6 +814,11 @@ export default function Appointments() {
     [dayAppointments, statusFilter]
   );
 
+  useEffect(() => { setApptPage(1); }, [statusFilter, dayAppointments]);
+
+  const totalApptPages = Math.max(1, Math.ceil(filtered.length / APPT_PAGE_SIZE));
+  const paginatedAppts = filtered.slice((apptPage - 1) * APPT_PAGE_SIZE, apptPage * APPT_PAGE_SIZE);
+
   const statusCounts = useMemo(() => {
     const counts: Record<string, number> = { all: dayAppointments.length };
     STATUS_OPTIONS.forEach(s => { counts[s] = dayAppointments.filter(a => a.status === s).length; });
@@ -795,16 +828,17 @@ export default function Appointments() {
   const isToday2 = isSameDay(selectedDate, new Date());
 
   return (
-    <div className="p-6 max-w-7xl mx-auto animate-in fade-in duration-500">
+    <div className="p-6 max-w-7xl mx-auto animate-in fade-in duration-500" style={{ fontFamily: "'Poppins', sans-serif" }}>
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-3xl font-serif font-bold text-primary">Appointments</h1>
-          <p className="text-muted-foreground mt-1">Schedule and manage client appointments.</p>
+          <p className="text-muted-foreground mt-1" style={{ fontFamily: "'Poppins', sans-serif" }}>Schedule and manage client appointments.</p>
         </div>
         <button
           onClick={() => setShowBookingModal(true)}
-          className="bg-secondary text-white px-6 py-3 rounded-xl font-semibold hover:bg-secondary/90 transition-colors shadow-lg shadow-secondary/20 flex items-center gap-2">
+          className="bg-secondary text-white px-6 py-3 rounded-xl font-semibold hover:bg-secondary/90 transition-colors shadow-lg shadow-secondary/20 flex items-center gap-2"
+          style={{ fontFamily: "'Poppins', sans-serif" }}>
           <Plus className="w-5 h-5" /> Book Appointment
         </button>
       </div>
@@ -893,17 +927,48 @@ export default function Appointments() {
               </p>
             </div>
           ) : (
-            <div className="space-y-3">
-              {filtered.map(appt => (
-                <AppointmentCard
-                  key={appt.id || appt._id}
-                  appt={appt}
-                  onStatusChange={handleStatusChange}
-                  onEdit={setEditingAppt}
-                  onDelete={setDeletingAppt}
-                />
-              ))}
-            </div>
+            <>
+              <div className="space-y-3">
+                {paginatedAppts.map(appt => (
+                  <AppointmentCard
+                    key={appt.id || appt._id}
+                    appt={appt}
+                    onStatusChange={handleStatusChange}
+                    onEdit={setEditingAppt}
+                    onDelete={setDeletingAppt}
+                  />
+                ))}
+              </div>
+              {totalApptPages > 1 && (
+                <div className="mt-4 flex flex-wrap justify-between items-center gap-3 text-sm text-muted-foreground bg-card border border-border/50 rounded-2xl px-5 py-3">
+                  <span>Showing {Math.min((apptPage - 1) * APPT_PAGE_SIZE + 1, filtered.length)}–{Math.min(apptPage * APPT_PAGE_SIZE, filtered.length)} of {filtered.length}</span>
+                  <div className="flex items-center gap-1">
+                    <button onClick={() => setApptPage(1)} disabled={apptPage === 1}
+                      className="px-2 py-1 rounded-lg border border-border hover:bg-muted transition-colors disabled:opacity-40 text-xs font-medium">«</button>
+                    <button onClick={() => setApptPage(p => Math.max(1, p - 1))} disabled={apptPage === 1}
+                      className="px-2.5 py-1 rounded-lg border border-border hover:bg-muted transition-colors disabled:opacity-40 text-xs font-medium">‹</button>
+                    {Array.from({ length: totalApptPages }, (_, i) => i + 1)
+                      .filter(p => p === 1 || p === totalApptPages || Math.abs(p - apptPage) <= 1)
+                      .reduce<(number | "...")[]>((acc, p, idx, arr) => {
+                        if (idx > 0 && (p as number) - (arr[idx - 1] as number) > 1) acc.push("...");
+                        acc.push(p); return acc;
+                      }, [])
+                      .map((p, i) => p === "..." ? (
+                        <span key={`e${i}`} className="px-2 text-muted-foreground">…</span>
+                      ) : (
+                        <button key={p} onClick={() => setApptPage(p as number)}
+                          className={`px-2.5 py-1 rounded-lg border text-xs font-semibold transition-colors ${apptPage === p ? "bg-primary text-white border-primary" : "border-border hover:bg-muted"}`}>
+                          {p}
+                        </button>
+                      ))}
+                    <button onClick={() => setApptPage(p => Math.min(totalApptPages, p + 1))} disabled={apptPage === totalApptPages}
+                      className="px-2.5 py-1 rounded-lg border border-border hover:bg-muted transition-colors disabled:opacity-40 text-xs font-medium">›</button>
+                    <button onClick={() => setApptPage(totalApptPages)} disabled={apptPage === totalApptPages}
+                      className="px-2 py-1 rounded-lg border border-border hover:bg-muted transition-colors disabled:opacity-40 text-xs font-medium">»</button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

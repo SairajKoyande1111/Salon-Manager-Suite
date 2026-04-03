@@ -164,7 +164,7 @@ export default function Customers() {
   };
 
   return (
-    <div className="p-8 max-w-7xl mx-auto animate-in fade-in duration-500">
+    <div className="p-8 max-w-7xl mx-auto animate-in fade-in duration-500" style={{ fontFamily: "'Poppins', sans-serif" }}>
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-serif font-bold text-primary">Customers</h1>
@@ -241,10 +241,11 @@ export default function Customers() {
                   <tr key={c.id || c._id} className="hover:bg-muted/20 transition-colors group">
                     <td className="p-4 pl-6">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm shrink-0 relative">
+                        <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0 relative"
+                          style={{ background: c.gender === "female" ? "#fdf2f8" : c.gender === "male" ? "#eff6ff" : "hsl(var(--primary) / 0.1)", color: c.gender === "female" ? "#db2777" : c.gender === "male" ? "#2563eb" : "hsl(var(--primary))" }}>
                           {c.name.substring(0, 2).toUpperCase()}
                           {c.gender && (
-                            <span className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center text-white ${c.gender === "male" ? "bg-blue-500" : "bg-pink-500"}`}>
+                            <span className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center text-white border-2 border-card ${c.gender === "male" ? "bg-blue-500" : "bg-pink-500"}`}>
                               {c.gender === "male" ? "♂" : "♀"}
                             </span>
                           )}
