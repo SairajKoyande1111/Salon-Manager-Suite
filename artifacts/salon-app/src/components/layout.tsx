@@ -1,10 +1,30 @@
 import { ReactNode } from "react";
 import { Sidebar } from "./Sidebar";
 import { useLocation } from "wouter";
+import { useAuth } from "@/contexts/auth";
+import { PinModal } from "./PinModal";
+
+const MODULE_NAMES: Record<string, string> = {
+  "/":             "Dashboard",
+  "/dashboard":    "Dashboard",
+  "/pos":          "POS / New Bill",
+  "/appointments": "Appointments",
+  "/customers":    "Customers",
+  "/invoices":     "Invoices",
+  "/services":     "Services",
+  "/products":     "Products",
+  "/staff":        "Staff",
+  "/memberships":  "Memberships",
+  "/reports":      "Reports",
+};
 
 export function Layout({ children }: { children: ReactNode }) {
-  const [location] = useLocation();
+  const [location, navigate] = useLocation();
+  const { lockConfig, unlockedModules, unlockModule } = useAuth();
   const isPosPage = location === "/pos";
+
+  const basePath = location.split("/").slice(0, 2).join("/") || "/";
+  const isLocked = lockConfig.modules.includes(basePath) && !unlockedModules.has(basePath);
 
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden">
@@ -12,6 +32,15 @@ export function Layout({ children }: { children: ReactNode }) {
       <main className="flex-1 h-full overflow-y-auto">
         {children}
       </main>
+
+      {isLocked && lockConfig.pin && (
+        <PinModal
+          moduleName={MODULE_NAMES[basePath] || "this module"}
+          correctPin={lockConfig.pin}
+          onSuccess={() => unlockModule(basePath)}
+          onCancel={() => navigate("/")}
+        />
+      )}
     </div>
   );
 }

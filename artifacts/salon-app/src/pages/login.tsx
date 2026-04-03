@@ -1,10 +1,6 @@
 import { useState } from "react";
 import { Scissors, Eye, EyeOff, Lock, Mail } from "lucide-react";
-
-const CREDENTIALS = {
-  email: "thetouch@gmail.com",
-  password: "thetouch@132231",
-};
+import { getStoredCredentials } from "@/contexts/auth";
 
 interface Props {
   onLogin: () => void;
@@ -22,8 +18,9 @@ export default function Login({ onLogin }: Props) {
     setError("");
     setLoading(true);
     setTimeout(() => {
-      if (email.trim() === CREDENTIALS.email && password === CREDENTIALS.password) {
-        localStorage.setItem("atsalon_auth", "true");
+      const creds = getStoredCredentials();
+      if (email.trim() === creds.email && password === creds.password) {
+        sessionStorage.setItem("atsalon_session", "true");
         onLogin();
       } else {
         setError("Invalid email or password. Please try again.");

@@ -11,28 +11,33 @@ import {
   BarChart3, 
   FileText,
   LogOut,
-  Scissors
+  Scissors,
+  Settings,
+  Lock
 } from "lucide-react";
 import clsx from "clsx";
+import { useAuth } from "@/contexts/auth";
 
 const navItems = [
-  { icon: LayoutDashboard, label: "Dashboard", href: "/" },
-  { icon: MonitorCheck, label: "POS / New Bill", href: "/pos" },
-  { icon: CalendarDays, label: "Appointments", href: "/appointments" },
-  { icon: Users, label: "Customers", href: "/customers" },
-  { icon: FileText, label: "Invoices", href: "/invoices" },
-  { icon: Sparkles, label: "Services", href: "/services" },
-  { icon: Package, label: "Products", href: "/products" },
-  { icon: Briefcase, label: "Staff", href: "/staff" },
-  { icon: Tag, label: "Memberships", href: "/memberships" },
-  { icon: BarChart3, label: "Reports", href: "/reports" },
+  { icon: LayoutDashboard, label: "Dashboard",     href: "/" },
+  { icon: MonitorCheck,    label: "POS / New Bill", href: "/pos" },
+  { icon: CalendarDays,    label: "Appointments",   href: "/appointments" },
+  { icon: Users,           label: "Customers",      href: "/customers" },
+  { icon: FileText,        label: "Invoices",       href: "/invoices" },
+  { icon: Sparkles,        label: "Services",       href: "/services" },
+  { icon: Package,         label: "Products",       href: "/products" },
+  { icon: Briefcase,       label: "Staff",          href: "/staff" },
+  { icon: Tag,             label: "Memberships",    href: "/memberships" },
+  { icon: BarChart3,       label: "Reports",        href: "/reports" },
+  { icon: Settings,        label: "Settings",       href: "/settings" },
 ];
 
 export function Sidebar() {
   const [location] = useLocation();
+  const { lockConfig } = useAuth();
 
   const handleLogout = () => {
-    localStorage.removeItem("atsalon_auth");
+    sessionStorage.removeItem("atsalon_session");
     window.location.reload();
   };
 
@@ -53,6 +58,7 @@ export function Sidebar() {
       <nav className="flex-1 px-4 space-y-1 overflow-y-auto mt-4">
         {navItems.map((item) => {
           const isActive = location === item.href || (item.href !== "/" && location.startsWith(item.href));
+          const isLocked = lockConfig.modules.includes(item.href);
           return (
             <Link 
               key={item.href} 
@@ -65,7 +71,8 @@ export function Sidebar() {
               )}
             >
               <item.icon className={clsx("w-5 h-5", isActive ? "text-secondary" : "")} />
-              {item.label}
+              <span className="flex-1">{item.label}</span>
+              {isLocked && <Lock className="w-3 h-3 text-sidebar-foreground/40" />}
             </Link>
           );
         })}

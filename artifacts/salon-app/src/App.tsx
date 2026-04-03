@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Layout } from "@/components/layout";
+import { AuthProvider } from "@/contexts/auth";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 
@@ -19,6 +20,7 @@ import Products from "@/pages/products";
 import Memberships from "@/pages/memberships";
 import Reports from "@/pages/reports";
 import Invoices from "@/pages/invoices";
+import Settings from "@/pages/settings";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +41,7 @@ function Router() {
         <Route path="/memberships" component={Memberships} />
         <Route path="/reports" component={Reports} />
         <Route path="/invoices" component={Invoices} />
+        <Route path="/settings" component={Settings} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
@@ -46,11 +49,11 @@ function Router() {
 }
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(() => localStorage.getItem("atsalon_auth") === "true");
+  const [isLoggedIn, setIsLoggedIn] = useState(() => sessionStorage.getItem("atsalon_session") === "true");
 
   const handleLogin = () => setIsLoggedIn(true);
   const handleLogout = () => {
-    localStorage.removeItem("atsalon_auth");
+    sessionStorage.removeItem("atsalon_session");
     setIsLoggedIn(false);
   };
 
@@ -68,9 +71,11 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-          <Router />
-        </WouterRouter>
+        <AuthProvider>
+          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+            <Router />
+          </WouterRouter>
+        </AuthProvider>
         <Toaster />
       </TooltipProvider>
     </QueryClientProvider>
