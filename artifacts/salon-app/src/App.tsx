@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Layout } from "@/components/layout";
 import NotFound from "@/pages/not-found";
+import Login from "@/pages/login";
 
 import Dashboard from "@/pages/dashboard";
 import Appointments from "@/pages/appointments";
@@ -44,6 +46,25 @@ function Router() {
 }
 
 function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(() => localStorage.getItem("atsalon_auth") === "true");
+
+  const handleLogin = () => setIsLoggedIn(true);
+  const handleLogout = () => {
+    localStorage.removeItem("atsalon_auth");
+    setIsLoggedIn(false);
+  };
+
+  if (!isLoggedIn) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Login onLogin={handleLogin} />
+          <Toaster />
+        </TooltipProvider>
+      </QueryClientProvider>
+    );
+  }
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>

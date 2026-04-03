@@ -99,7 +99,7 @@ function SearchSelect({ placeholder, value, onChange, options, getLabel, getId }
 function AddCustomerModal({ onClose, onSaved }: {
   onClose: () => void; onSaved: (customer: any) => void;
 }) {
-  const [form, setForm] = useState({ name: "", phone: "", dob: "", notes: "" });
+  const [form, setForm] = useState({ name: "", phone: "", dob: "", gender: "" });
   const [phoneError, setPhoneError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -116,7 +116,7 @@ function AddCustomerModal({ onClose, onSaved }: {
       const res = await fetch(`${API_BASE}/customers`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: form.name, phone: form.phone, dob: form.dob, notes: form.notes, email: "" }),
+        body: JSON.stringify({ name: form.name, phone: form.phone, dob: form.dob, gender: form.gender, email: "" }),
       });
       if (!res.ok) throw new Error();
       const created = await res.json();
@@ -145,6 +145,18 @@ function AddCustomerModal({ onClose, onSaved }: {
               value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
           </div>
           <div>
+            <label className="block text-sm font-medium mb-2 text-muted-foreground">Gender</label>
+            <div className="flex gap-2">
+              {[{ label: "♂ Male", value: "male" }, { label: "♀ Female", value: "female" }].map(g => (
+                <button key={g.value} type="button"
+                  onClick={() => setForm({ ...form, gender: form.gender === g.value ? "" : g.value })}
+                  className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border transition-all ${form.gender === g.value ? "bg-primary text-white border-primary" : "border-border text-muted-foreground hover:bg-muted"}`}>
+                  {g.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
             <label className="block text-sm font-medium mb-1 text-muted-foreground">Phone Number * (10 digits)</label>
             <input required type="tel" maxLength={10} placeholder="10-digit mobile number"
               className={`w-full p-3 rounded-xl border bg-muted/30 focus:ring-2 outline-none ${phoneError ? "border-red-400 focus:ring-red-200" : "focus:ring-primary/20"}`}
@@ -158,12 +170,6 @@ function AddCustomerModal({ onClose, onSaved }: {
             <input type="date"
               className="w-full p-3 rounded-xl border bg-muted/30 focus:ring-2 focus:ring-primary/20 outline-none"
               value={form.dob} onChange={e => setForm({ ...form, dob: e.target.value })} />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1 text-muted-foreground">Notes (Optional)</label>
-            <textarea rows={2} placeholder="Any special preferences or notes..."
-              className="w-full p-3 rounded-xl border bg-muted/30 focus:ring-2 focus:ring-primary/20 outline-none resize-none"
-              value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} />
           </div>
           <div className="flex gap-3 mt-6">
             <button type="button" onClick={onClose}
@@ -414,6 +420,7 @@ function MultiServiceSelect({ selectedIds, onChange, services }: {
   selectedIds: string[]; onChange: (ids: string[]) => void; services: any[];
 }) {
   const [searchText, setSearchText] = useState("");
+  const [pendingId, setPendingId] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -424,11 +431,20 @@ function MultiServiceSelect({ selectedIds, onChange, services }: {
     ? available.filter(s => s.name.toLowerCase().includes(searchText.toLowerCase()))
     : available;
 
-  const handleAdd = (id?: string) => {
-    const targetId = id || (filtered.length === 1 ? (filtered[0].id || filtered[0]._id) : "");
-    if (targetId && !selectedIds.includes(targetId)) {
-      onChange([...selectedIds, targetId]);
+  const selectFromDropdown = (svc: any) => {
+    const id = svc.id || svc._id;
+    setSearchText(svc.name);
+    setPendingId(id);
+    setShowDropdown(false);
+    inputRef.current?.focus();
+  };
+
+  const handleAdd = () => {
+    if (pendingId && !selectedIds.includes(pendingId)) {
+      onChange([...selectedIds, pendingId]);
       setSearchText("");
+      setPendingId("");
+      setShowDropdown(true);
       inputRef.current?.focus();
     }
   };
@@ -442,6 +458,12 @@ function MultiServiceSelect({ selectedIds, onChange, services }: {
     document.addEventListener("mousedown", h);
     return () => document.removeEventListener("mousedown", h);
   }, []);
+
+  const handleSearchChange = (val: string) => {
+    setSearchText(val);
+    setPendingId("");
+    setShowDropdown(true);
+  };
 
   return (
     <div className="space-y-2" ref={containerRef}>
@@ -465,9 +487,9 @@ function MultiServiceSelect({ selectedIds, onChange, services }: {
           <input
             ref={inputRef}
             type="text"
-            placeholder="Search and add service..."
+            placeholder="Search service..."
             value={searchText}
-            onChange={e => { setSearchText(e.target.value); setShowDropdown(true); }}
+            onChange={e => handleSearchChange(e.target.value)}
             onFocus={() => setShowDropdown(true)}
             className="w-full pl-8 pr-3 py-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-primary/40 outline-none"
           />
@@ -475,20 +497,20 @@ function MultiServiceSelect({ selectedIds, onChange, services }: {
             <div className="absolute z-20 w-full mt-1 bg-card border border-border/60 rounded-xl shadow-xl overflow-hidden max-h-44 overflow-y-auto">
               {filtered.map(s => (
                 <button key={s.id || s._id} type="button"
-                  className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted/60 transition-colors font-medium"
-                  onMouseDown={e => { e.preventDefault(); handleAdd(s.id || s._id); setShowDropdown(false); }}>
+                  className={`w-full text-left px-4 py-2.5 text-sm hover:bg-muted/60 transition-colors font-medium ${pendingId === (s.id || s._id) ? "bg-primary/5 text-primary" : ""}`}
+                  onMouseDown={e => { e.preventDefault(); selectFromDropdown(s); }}>
                   {s.name}
                 </button>
               ))}
             </div>
           )}
-          {showDropdown && filtered.length === 0 && searchText && (
+          {showDropdown && filtered.length === 0 && searchText && !pendingId && (
             <div className="absolute z-20 w-full mt-1 bg-card border border-border/60 rounded-xl shadow-xl overflow-hidden">
               <p className="px-4 py-3 text-sm text-muted-foreground text-center">No services found</p>
             </div>
           )}
         </div>
-        <button type="button" onClick={() => handleAdd()} disabled={filtered.length === 0}
+        <button type="button" onClick={handleAdd} disabled={!pendingId}
           className="px-4 py-2.5 rounded-xl bg-primary text-white text-xs font-semibold disabled:opacity-40 hover:bg-primary/90 transition-colors shrink-0">
           Add
         </button>
