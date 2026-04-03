@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Scissors, Eye, EyeOff, Lock, Mail } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { getStoredCredentials } from "@/contexts/auth";
 
 interface Props {
@@ -33,11 +33,8 @@ export default function Login({ onLogin }: Props) {
     <div className="min-h-screen flex items-center justify-center bg-sidebar p-4" style={{ fontFamily: "'Poppins', sans-serif" }}>
       <div className="w-full max-w-md">
         <div className="flex flex-col items-center mb-10">
-          <div className="w-16 h-16 rounded-2xl rose-gold-gradient flex items-center justify-center shadow-xl mb-4">
-            <Scissors className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-3xl font-serif font-bold text-white tracking-widest">AT SALON</h1>
-          <p className="text-white/50 text-sm tracking-widest uppercase mt-1">Management System</p>
+          <h1 className="text-3xl font-extrabold text-white tracking-widest" style={{ fontFamily: "'Poppins', sans-serif" }}>AT SMART SALON</h1>
+          <p className="text-white/50 text-xs tracking-widest uppercase mt-1" style={{ fontFamily: "'Poppins', sans-serif" }}>Salon Management Software</p>
         </div>
 
         <div className="bg-card rounded-3xl shadow-2xl p-8">
