@@ -10,6 +10,8 @@ const API_BASE = "/api";
 
 export default function Customers() {
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 10;
   const { data, isLoading, refetch } = useListCustomers({ search });
   const createCustomer = useCreateCustomer();
   const { toast } = useToast();
@@ -36,6 +38,10 @@ export default function Customers() {
 
   // Invoice view
   const [viewInvoiceBill, setViewInvoiceBill] = useState<any>(null);
+
+  const allCustomers: any[] = data?.customers || [];
+  const totalPages = Math.max(1, Math.ceil(allCustomers.length / PAGE_SIZE));
+  const paginatedCustomers = allCustomers.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const validatePhone = (phone: string) => {
     if (!/^\d{10}$/.test(phone)) {
@@ -182,7 +188,7 @@ export default function Customers() {
                   </td>
                 </tr>
               ) : (
-                data.customers.map((c: any) => (
+                paginatedCustomers.map((c: any) => (
                   <tr key={c.id || c._id} className="hover:bg-muted/20 transition-colors group">
                     <td className="p-4 pl-6">
                       <div className="flex items-center gap-3">
@@ -256,6 +262,37 @@ export default function Customers() {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        {allCustomers.length > PAGE_SIZE && (
+          <div className="px-6 py-3 border-t border-border/50 bg-muted/20 flex flex-wrap justify-between items-center gap-3 text-sm text-muted-foreground">
+            <span>Showing {Math.min((page - 1) * PAGE_SIZE + 1, allCustomers.length)}–{Math.min(page * PAGE_SIZE, allCustomers.length)} of {allCustomers.length} customers</span>
+            <div className="flex items-center gap-1">
+              <button onClick={() => setPage(1)} disabled={page === 1}
+                className="px-2 py-1 rounded-lg border border-border hover:bg-muted transition-colors disabled:opacity-40 text-xs font-medium">«</button>
+              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+                className="px-2.5 py-1 rounded-lg border border-border hover:bg-muted transition-colors disabled:opacity-40 text-xs font-medium">‹</button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
+                .reduce<(number | "...")[]>((acc, p, idx, arr) => {
+                  if (idx > 0 && (p as number) - (arr[idx - 1] as number) > 1) acc.push("...");
+                  acc.push(p); return acc;
+                }, [])
+                .map((p, i) => p === "..." ? (
+                  <span key={`e${i}`} className="px-2 text-muted-foreground">…</span>
+                ) : (
+                  <button key={p} onClick={() => setPage(p as number)}
+                    className={`px-2.5 py-1 rounded-lg border text-xs font-semibold transition-colors ${page === p ? "bg-primary text-white border-primary" : "border-border hover:bg-muted"}`}>
+                    {p}
+                  </button>
+                ))}
+              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+                className="px-2.5 py-1 rounded-lg border border-border hover:bg-muted transition-colors disabled:opacity-40 text-xs font-medium">›</button>
+              <button onClick={() => setPage(totalPages)} disabled={page === totalPages}
+                className="px-2 py-1 rounded-lg border border-border hover:bg-muted transition-colors disabled:opacity-40 text-xs font-medium">»</button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── Add Customer Modal ── */}

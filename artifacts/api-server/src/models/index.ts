@@ -119,6 +119,13 @@ export const Product =
   mongoose.model<IProduct>("Product", ProductSchema);
 
 // ── Appointment ───────────────────────────────────────────
+export interface IServiceItem {
+  serviceId: string;
+  serviceName: string;
+  serviceCategory: string;
+  duration: number;
+}
+
 export interface IAppointment extends Document {
   customerId?: string;
   customerName: string;
@@ -129,12 +136,18 @@ export interface IAppointment extends Document {
   serviceName: string;
   serviceCategory: string;
   duration: number;
+  services: IServiceItem[];
   appointmentDate: string;
   appointmentTime: string;
   status: string;
   notes?: string;
   createdAt: Date;
 }
+
+const ServiceItemSchema = new Schema<IServiceItem>(
+  { serviceId: String, serviceName: String, serviceCategory: String, duration: Number },
+  { _id: false }
+);
 
 const AppointmentSchema = new Schema<IAppointment>(
   {
@@ -143,10 +156,11 @@ const AppointmentSchema = new Schema<IAppointment>(
     customerPhone: String,
     staffId: { type: String, required: true },
     staffName: { type: String, required: true },
-    serviceId: { type: String, required: true },
-    serviceName: { type: String, required: true },
+    serviceId: { type: String, default: "" },
+    serviceName: { type: String, default: "" },
     serviceCategory: { type: String, default: "General" },
     duration: { type: Number, default: 30 },
+    services: { type: [ServiceItemSchema], default: [] },
     appointmentDate: { type: String, required: true },
     appointmentTime: { type: String, required: true },
     status: { type: String, default: "scheduled" },

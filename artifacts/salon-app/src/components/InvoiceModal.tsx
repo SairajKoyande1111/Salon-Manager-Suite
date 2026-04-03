@@ -58,21 +58,26 @@ export function InvoiceModal({ bill, onClose }: InvoiceModalProps) {
   const invoiceDate = bill.createdAt ? new Date(bill.createdAt) : new Date();
   const phone = formatPhone(bill.customerPhone);
 
-  const handleDownloadPdf = async () => {
+  const handlePrint = () => {
     const el = document.getElementById("invoice-print-area");
     if (!el) return;
-
-    const html2pdf = (await import("html2pdf.js")).default;
-
-    const opt = {
-      margin: [10, 10, 10, 10],
-      filename: `invoice-${bill.billNumber}.pdf`,
-      image: { type: "jpeg", quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, logging: false },
-      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-    };
-
-    html2pdf().set(opt).from(el).save();
+    const win = window.open("", "_blank", "width=820,height=960");
+    if (!win) return;
+    win.document.write(`<!DOCTYPE html><html><head>
+      <meta charset="UTF-8"/>
+      <title>Invoice – ${bill.billNumber}</title>
+      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+      <style>
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:'Poppins',sans-serif;color:#111;background:#fff}
+        .page{max-width:720px;margin:0 auto;padding:48px 40px}
+        img{display:block}
+        table{border-collapse:collapse;width:100%}
+        @media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
+      </style>
+    </head><body>${el.innerHTML}</body></html>`);
+    win.document.close();
+    setTimeout(() => { win.focus(); win.print(); }, 400);
   };
 
   return (
@@ -83,9 +88,9 @@ export function InvoiceModal({ bill, onClose }: InvoiceModalProps) {
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between shrink-0">
           <h2 className="text-base font-bold text-gray-900" style={{ fontFamily: f }}>Invoice Preview</h2>
           <div className="flex items-center gap-2">
-            <button onClick={handleDownloadPdf}
+            <button onClick={handlePrint}
               className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-900 text-white text-sm font-semibold hover:bg-gray-700 transition-colors">
-              <Download className="w-4 h-4" /> Download PDF
+              <Download className="w-4 h-4" /> Print / Download
             </button>
             <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
               <X className="w-5 h-5 text-gray-500" />

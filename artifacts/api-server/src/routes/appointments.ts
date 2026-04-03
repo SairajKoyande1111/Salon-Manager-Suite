@@ -23,7 +23,7 @@ router.get("/appointments", async (req, res) => {
 });
 
 router.post("/appointments", async (req, res) => {
-  const { customerId, staffId, serviceId, appointmentDate, appointmentTime, notes } = req.body;
+  const { customerId, staffId, serviceId, serviceIds, appointmentDate, appointmentTime, notes } = req.body;
 
   let customerName = "Walk-in";
   let customerPhone = "";
@@ -36,7 +36,23 @@ router.post("/appointments", async (req, res) => {
   }
 
   const staffMember = await Staff.findById(staffId);
-  const service = await Service.findById(serviceId);
+
+  // Support both single serviceId and array serviceIds
+  const ids: string[] = Array.isArray(serviceIds) && serviceIds.length > 0
+    ? serviceIds
+    : serviceId ? [serviceId] : [];
+
+  const resolvedServices = await Promise.all(
+    ids.map(async (sid) => {
+      const svc = await Service.findById(sid);
+      return svc
+        ? { serviceId: sid, serviceName: svc.name, serviceCategory: svc.category || "General", duration: svc.duration || 30 }
+        : { serviceId: sid, serviceName: "Unknown", serviceCategory: "General", duration: 30 };
+    })
+  );
+
+  const primaryService = resolvedServices[0] || { serviceId: "", serviceName: "", serviceCategory: "General", duration: 30 };
+  const totalDuration = resolvedServices.reduce((sum, s) => sum + s.duration, 0);
 
   const appointment = await Appointment.create({
     customerId: customerId || undefined,
@@ -44,10 +60,11 @@ router.post("/appointments", async (req, res) => {
     customerPhone,
     staffId,
     staffName: staffMember?.name || "Unknown",
-    serviceId,
-    serviceName: service?.name || "Unknown",
-    serviceCategory: service?.category || "General",
-    duration: service?.duration || 30,
+    serviceId: primaryService.serviceId,
+    serviceName: resolvedServices.map(s => s.serviceName).join(", "),
+    serviceCategory: primaryService.serviceCategory,
+    duration: totalDuration,
+    services: resolvedServices,
     appointmentDate,
     appointmentTime,
     status: "scheduled",
@@ -59,7 +76,7 @@ router.post("/appointments", async (req, res) => {
 
 router.put("/appointments/:appointmentId", async (req, res) => {
   const { appointmentId } = req.params;
-  const { status, notes, customerId, staffId, serviceId, appointmentDate, appointmentTime } = req.body;
+  const { status, notes, customerId, staffId, serviceId, serviceIds, appointmentDate, appointmentTime } = req.body;
 
   const update: any = {};
   if (status !== undefined) update.status = status;
@@ -81,6 +98,7 @@ router.put("/appointments/:appointmentId", async (req, res) => {
       update.customerPhone = "";
     }
   }
+
   if (staffId) {
     const staffMember = await Staff.findById(staffId);
     if (staffMember) {
@@ -88,14 +106,27 @@ router.put("/appointments/:appointmentId", async (req, res) => {
       update.staffName = staffMember.name;
     }
   }
-  if (serviceId) {
-    const service = await Service.findById(serviceId);
-    if (service) {
-      update.serviceId = serviceId;
-      update.serviceName = service.name;
-      update.serviceCategory = service.category;
-      update.duration = service.duration;
-    }
+
+  // Support both single serviceId and array serviceIds
+  const ids: string[] = Array.isArray(serviceIds) && serviceIds.length > 0
+    ? serviceIds
+    : serviceId ? [serviceId] : [];
+
+  if (ids.length > 0) {
+    const resolvedServices = await Promise.all(
+      ids.map(async (sid) => {
+        const svc = await Service.findById(sid);
+        return svc
+          ? { serviceId: sid, serviceName: svc.name, serviceCategory: svc.category || "General", duration: svc.duration || 30 }
+          : { serviceId: sid, serviceName: "Unknown", serviceCategory: "General", duration: 30 };
+      })
+    );
+    const primaryService = resolvedServices[0];
+    update.serviceId = primaryService.serviceId;
+    update.serviceName = resolvedServices.map(s => s.serviceName).join(", ");
+    update.serviceCategory = primaryService.serviceCategory;
+    update.duration = resolvedServices.reduce((sum, s) => sum + s.duration, 0);
+    update.services = resolvedServices;
   }
 
   const appointment = await Appointment.findByIdAndUpdate(appointmentId, update, { new: true });

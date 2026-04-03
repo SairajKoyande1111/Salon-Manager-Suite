@@ -28,6 +28,8 @@ export default function Invoices() {
   const [toDate, setToDate] = useState("");
   const [payFilter, setPayFilter] = useState("all");
   const [viewBill, setViewBill] = useState<any>(null);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 10;
 
   const bills: any[] = data?.bills || [];
 
@@ -52,9 +54,19 @@ export default function Invoices() {
     setFromDate("");
     setToDate("");
     setPayFilter("all");
+    setPage(1);
   };
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   const hasFilters = search || fromDate || toDate || payFilter !== "all";
+
+  // Reset to page 1 when filters change
+  const handleSearchChange = (v: string) => { setSearch(v); setPage(1); };
+  const handleFromDate = (v: string) => { setFromDate(v); setPage(1); };
+  const handleToDate = (v: string) => { setToDate(v); setPage(1); };
+  const handlePayFilter = (v: string) => { setPayFilter(v); setPage(1); };
 
   return (
     <div className="p-8 max-w-7xl mx-auto animate-in fade-in duration-500">
@@ -81,7 +93,7 @@ export default function Invoices() {
               type="text"
               placeholder="Search by name, phone or invoice no..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
               className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-border focus:ring-2 focus:ring-primary/20 outline-none text-sm bg-muted/30"
             />
           </div>
@@ -92,7 +104,7 @@ export default function Invoices() {
             <input
               type="date"
               value={fromDate}
-              onChange={(e) => setFromDate(e.target.value)}
+              onChange={(e) => handleFromDate(e.target.value)}
               className="py-2.5 px-3 rounded-xl border border-border focus:ring-2 focus:ring-primary/20 outline-none text-sm bg-muted/30"
             />
           </div>
@@ -103,7 +115,7 @@ export default function Invoices() {
             <input
               type="date"
               value={toDate}
-              onChange={(e) => setToDate(e.target.value)}
+              onChange={(e) => handleToDate(e.target.value)}
               className="py-2.5 px-3 rounded-xl border border-border focus:ring-2 focus:ring-primary/20 outline-none text-sm bg-muted/30"
             />
           </div>
@@ -113,7 +125,7 @@ export default function Invoices() {
             <label className="text-xs text-muted-foreground font-medium px-1">Payment</label>
             <select
               value={payFilter}
-              onChange={(e) => setPayFilter(e.target.value)}
+              onChange={(e) => handlePayFilter(e.target.value)}
               className="py-2.5 px-3 rounded-xl border border-border focus:ring-2 focus:ring-primary/20 outline-none text-sm bg-muted/30 capitalize"
             >
               {PAY_METHODS.map((m) => (
@@ -168,7 +180,7 @@ export default function Invoices() {
                   </td>
                 </tr>
               ) : (
-                filtered.map((bill: any) => (
+                paginated.map((bill: any) => (
                   <tr key={bill.id || bill._id} className="hover:bg-muted/20 transition-colors group">
                     {/* Invoice # */}
                     <td className="p-4 pl-6">
@@ -247,13 +259,42 @@ export default function Invoices() {
           </table>
         </div>
 
-        {/* Summary Footer */}
+        {/* Footer: summary + pagination */}
         {filtered.length > 0 && (
-          <div className="px-6 py-3 border-t border-border/50 bg-muted/20 flex justify-between items-center text-sm text-muted-foreground">
-            <span>Showing {filtered.length} of {bills.length} invoices</span>
-            <span className="font-semibold text-foreground">
-              Total: ₹{filtered.reduce((sum: number, b: any) => sum + Number(b.finalAmount || 0), 0).toLocaleString("en-IN")}
+          <div className="px-6 py-3 border-t border-border/50 bg-muted/20 flex flex-wrap justify-between items-center gap-3 text-sm text-muted-foreground">
+            <span>
+              Showing {Math.min((page - 1) * PAGE_SIZE + 1, filtered.length)}–{Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length} invoices
+              &nbsp;·&nbsp;
+              <span className="font-semibold text-foreground">
+                Total: ₹{filtered.reduce((sum: number, b: any) => sum + Number(b.finalAmount || 0), 0).toLocaleString("en-IN")}
+              </span>
             </span>
+            {totalPages > 1 && (
+              <div className="flex items-center gap-1">
+                <button onClick={() => setPage(1)} disabled={page === 1}
+                  className="px-2 py-1 rounded-lg border border-border hover:bg-muted transition-colors disabled:opacity-40 text-xs font-medium">«</button>
+                <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+                  className="px-2.5 py-1 rounded-lg border border-border hover:bg-muted transition-colors disabled:opacity-40 text-xs font-medium">‹</button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
+                  .reduce<(number | "...")[]>((acc, p, idx, arr) => {
+                    if (idx > 0 && (p as number) - (arr[idx - 1] as number) > 1) acc.push("...");
+                    acc.push(p); return acc;
+                  }, [])
+                  .map((p, i) => p === "..." ? (
+                    <span key={`e${i}`} className="px-2 text-muted-foreground">…</span>
+                  ) : (
+                    <button key={p} onClick={() => setPage(p as number)}
+                      className={`px-2.5 py-1 rounded-lg border text-xs font-semibold transition-colors ${page === p ? "bg-primary text-white border-primary" : "border-border hover:bg-muted"}`}>
+                      {p}
+                    </button>
+                  ))}
+                <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+                  className="px-2.5 py-1 rounded-lg border border-border hover:bg-muted transition-colors disabled:opacity-40 text-xs font-medium">›</button>
+                <button onClick={() => setPage(totalPages)} disabled={page === totalPages}
+                  className="px-2 py-1 rounded-lg border border-border hover:bg-muted transition-colors disabled:opacity-40 text-xs font-medium">»</button>
+              </div>
+            )}
           </div>
         )}
       </div>
