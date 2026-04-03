@@ -7,6 +7,7 @@ export interface ICustomer extends Document {
   email?: string;
   dob?: string;
   notes?: string;
+  gender?: string;
   totalSpend: number;
   totalVisits: number;
   createdAt: Date;
@@ -15,10 +16,11 @@ export interface ICustomer extends Document {
 const CustomerSchema = new Schema<ICustomer>(
   {
     name: { type: String, required: true },
-    phone: { type: String, required: true },
+    phone: { type: String, required: true, unique: true },
     email: String,
     dob: String,
     notes: String,
+    gender: { type: String, enum: ["male", "female", ""], default: "" },
     totalSpend: { type: Number, default: 0 },
     totalVisits: { type: Number, default: 0 },
   },

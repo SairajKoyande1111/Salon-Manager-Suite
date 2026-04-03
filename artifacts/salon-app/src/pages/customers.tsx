@@ -1,55 +1,99 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useListCustomers, useCreateCustomer } from "@workspace/api-client-react";
-import { Search, Plus, User, Phone, Calendar, TrendingUp, Eye, Pencil, Trash2, X, Scissors, Package, FileText, BadgeCheck } from "lucide-react";
+import { Search, Plus, User, Phone, Calendar, Eye, Pencil, Trash2, X, Scissors, Package, FileText, BadgeCheck } from "lucide-react";
 import { format } from "date-fns";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { InvoiceModal } from "@/components/InvoiceModal";
 
 const API_BASE = "/api";
+const PAGE_SIZE = 10;
+
+type SortKey = "default" | "most-spent" | "least-spent" | "most-visits" | "least-visits";
+type GenderFilter = "all" | "male" | "female";
+
+function GenderToggle({ value, onChange, dark = false }: { value: string; onChange: (v: string) => void; dark?: boolean }) {
+  const base = dark
+    ? "px-4 py-2 rounded-xl text-sm font-semibold transition-all"
+    : "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border";
+  const opts = [
+    { label: "Male", value: "male" },
+    { label: "Female", value: "female" },
+  ];
+  return (
+    <div className={`flex gap-2 ${dark ? "" : ""}`}>
+      {opts.map(o => (
+        <button
+          key={o.value}
+          type="button"
+          onClick={() => onChange(value === o.value ? "" : o.value)}
+          className={`${base} ${
+            value === o.value
+              ? dark
+                ? "bg-primary text-white shadow"
+                : "bg-primary text-white border-primary"
+              : dark
+              ? "bg-muted/30 text-muted-foreground hover:bg-muted/50"
+              : "border-border text-muted-foreground hover:bg-muted"
+          }`}
+        >
+          {o.label === "Male" ? "♂ Male" : "♀ Female"}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 export default function Customers() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const PAGE_SIZE = 10;
+  const [genderFilter, setGenderFilter] = useState<GenderFilter>("all");
+  const [sortKey, setSortKey] = useState<SortKey>("default");
+
   const { data, isLoading, refetch } = useListCustomers({ search });
   const createCustomer = useCreateCustomer();
   const { toast } = useToast();
 
-  // Add modal
   const [showAdd, setShowAdd] = useState(false);
   const [phoneError, setPhoneError] = useState("");
-  const [formData, setFormData] = useState({ name: "", phone: "", dob: "", notes: "" });
+  const [formData, setFormData] = useState({ name: "", phone: "", dob: "", gender: "" });
 
-  // View modal
   const [viewCustomerId, setViewCustomerId] = useState<string | null>(null);
   const [customerDetail, setCustomerDetail] = useState<any>(null);
   const [detailLoading, setDetailLoading] = useState(false);
 
-  // Edit modal
   const [editCustomer, setEditCustomer] = useState<any>(null);
-  const [editForm, setEditForm] = useState({ name: "", phone: "", dob: "" });
+  const [editForm, setEditForm] = useState({ name: "", phone: "", dob: "", gender: "" });
   const [editPhoneError, setEditPhoneError] = useState("");
   const [editSaving, setEditSaving] = useState(false);
 
-  // Delete confirm
   const [deleteCustomer, setDeleteCustomer] = useState<any>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  // Invoice view
   const [viewInvoiceBill, setViewInvoiceBill] = useState<any>(null);
 
   const allCustomers: any[] = data?.customers || [];
-  const totalPages = Math.max(1, Math.ceil(allCustomers.length / PAGE_SIZE));
-  const paginatedCustomers = allCustomers.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  const filteredSorted = useMemo(() => {
+    let list = [...allCustomers];
+    if (genderFilter !== "all") list = list.filter(c => c.gender === genderFilter);
+    switch (sortKey) {
+      case "most-spent":   list.sort((a, b) => (b.totalSpend || 0) - (a.totalSpend || 0)); break;
+      case "least-spent":  list.sort((a, b) => (a.totalSpend || 0) - (b.totalSpend || 0)); break;
+      case "most-visits":  list.sort((a, b) => (b.totalVisits || 0) - (a.totalVisits || 0)); break;
+      case "least-visits": list.sort((a, b) => (a.totalVisits || 0) - (b.totalVisits || 0)); break;
+    }
+    return list;
+  }, [allCustomers, genderFilter, sortKey]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredSorted.length / PAGE_SIZE));
+  const paginatedCustomers = filteredSorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  const resetPage = () => setPage(1);
 
   const validatePhone = (phone: string) => {
-    if (!/^\d{10}$/.test(phone)) {
-      setPhoneError("Phone number must be exactly 10 digits");
-      return false;
-    }
-    setPhoneError("");
-    return true;
+    if (!/^\d{10}$/.test(phone)) { setPhoneError("Phone number must be exactly 10 digits"); return false; }
+    setPhoneError(""); return true;
   };
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -59,13 +103,11 @@ export default function Customers() {
       onSuccess: () => {
         toast({ title: "Customer Added", description: `${formData.name} has been registered.` });
         setShowAdd(false);
-        setFormData({ name: "", phone: "", dob: "", notes: "" });
+        setFormData({ name: "", phone: "", dob: "", gender: "" });
         setPhoneError("");
         refetch();
       },
-      onError: () => {
-        toast({ title: "Error", description: "Failed to add customer.", variant: "destructive" });
-      }
+      onError: () => toast({ title: "Error", description: "Failed to add customer.", variant: "destructive" }),
     });
   };
 
@@ -75,37 +117,28 @@ export default function Customers() {
     setDetailLoading(true);
     try {
       const res = await fetch(`${API_BASE}/customers/${customerId}`);
-      const data = await res.json();
-      setCustomerDetail(data);
+      const d = await res.json();
+      setCustomerDetail(d);
     } catch {
       toast({ title: "Error", description: "Failed to load customer details.", variant: "destructive" });
-    } finally {
-      setDetailLoading(false);
-    }
+    } finally { setDetailLoading(false); }
   };
 
   const openEdit = (c: any) => {
     setEditCustomer(c);
-    setEditForm({
-      name: c.name || "",
-      phone: c.phone || "",
-      dob: c.dob ? c.dob.substring(0, 10) : "",
-    });
+    setEditForm({ name: c.name || "", phone: c.phone || "", dob: c.dob ? c.dob.substring(0, 10) : "", gender: c.gender || "" });
     setEditPhoneError("");
   };
 
   const handleEdit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!/^\d{10}$/.test(editForm.phone)) {
-      setEditPhoneError("Phone number must be exactly 10 digits");
-      return;
-    }
+    if (!/^\d{10}$/.test(editForm.phone)) { setEditPhoneError("Phone number must be exactly 10 digits"); return; }
     setEditSaving(true);
     try {
       const res = await fetch(`${API_BASE}/customers/${editCustomer.id || editCustomer._id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: editForm.name, phone: editForm.phone, dob: editForm.dob }),
+        body: JSON.stringify({ name: editForm.name, phone: editForm.phone, dob: editForm.dob, gender: editForm.gender }),
       });
       if (!res.ok) throw new Error();
       toast({ title: "Customer Updated", description: `${editForm.name} has been updated.` });
@@ -113,27 +146,21 @@ export default function Customers() {
       refetch();
     } catch {
       toast({ title: "Error", description: "Failed to update customer.", variant: "destructive" });
-    } finally {
-      setEditSaving(false);
-    }
+    } finally { setEditSaving(false); }
   };
 
   const handleDelete = async () => {
     if (!deleteCustomer) return;
     setDeleteLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/customers/${deleteCustomer.id || deleteCustomer._id}`, {
-        method: "DELETE",
-      });
+      const res = await fetch(`${API_BASE}/customers/${deleteCustomer.id || deleteCustomer._id}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
       toast({ title: "Customer Deleted", description: `${deleteCustomer.name} has been removed.` });
       setDeleteCustomer(null);
       refetch();
     } catch {
       toast({ title: "Error", description: "Failed to delete customer.", variant: "destructive" });
-    } finally {
-      setDeleteLoading(false);
-    }
+    } finally { setDeleteLoading(false); }
   };
 
   return (
@@ -143,26 +170,48 @@ export default function Customers() {
           <h1 className="text-3xl font-serif font-bold text-primary">Customers</h1>
           <p className="text-muted-foreground mt-1">Manage your clients and their history.</p>
         </div>
-        <button
-          onClick={() => setShowAdd(true)}
-          className="bg-secondary text-white px-6 py-3 rounded-xl font-semibold hover:bg-secondary/90 transition-colors shadow-lg shadow-secondary/20 flex items-center gap-2"
-        >
+        <button onClick={() => setShowAdd(true)}
+          className="bg-secondary text-white px-6 py-3 rounded-xl font-semibold hover:bg-secondary/90 transition-colors shadow-lg shadow-secondary/20 flex items-center gap-2">
           <Plus className="w-5 h-5" /> Add Customer
         </button>
       </div>
 
       <div className="bg-card rounded-2xl shadow-lg border border-border/50 overflow-hidden">
-        <div className="p-4 border-b border-border/50 bg-muted/20">
-          <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Search by name or phone..."
+        {/* Search + Filters */}
+        <div className="p-4 border-b border-border/50 bg-muted/20 flex flex-wrap gap-3 items-center">
+          <div className="relative w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <input type="text" placeholder="Search by name or phone..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border focus:ring-2 focus:ring-primary/20 outline-none"
-            />
+              onChange={(e) => { setSearch(e.target.value); resetPage(); }}
+              className="w-full pl-9 pr-4 py-2 rounded-xl border border-border focus:ring-2 focus:ring-primary/20 outline-none text-sm" />
           </div>
+
+          {/* Gender filter */}
+          <div className="flex items-center gap-1.5">
+            {(["all", "male", "female"] as GenderFilter[]).map(g => (
+              <button key={g} onClick={() => { setGenderFilter(g); resetPage(); }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+                  genderFilter === g ? "bg-primary text-white border-primary" : "border-border text-muted-foreground hover:bg-muted"
+                }`}>
+                {g === "all" ? "All" : g === "male" ? "♂ Male" : "♀ Female"}
+              </button>
+            ))}
+          </div>
+
+          {/* Sort */}
+          <select value={sortKey} onChange={e => { setSortKey(e.target.value as SortKey); resetPage(); }}
+            className="px-3 py-2 rounded-xl border border-border text-xs bg-background focus:outline-none focus:ring-2 focus:ring-primary/20">
+            <option value="default">Sort: Default</option>
+            <option value="most-spent">Most Spent</option>
+            <option value="least-spent">Least Spent</option>
+            <option value="most-visits">Most Visits</option>
+            <option value="least-visits">Least Visits</option>
+          </select>
+
+          <span className="ml-auto text-xs text-muted-foreground">
+            {filteredSorted.length} customer{filteredSorted.length !== 1 ? "s" : ""}
+          </span>
         </div>
 
         <div className="overflow-x-auto">
@@ -180,11 +229,11 @@ export default function Customers() {
             <tbody className="divide-y divide-border/50">
               {isLoading ? (
                 <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">Loading...</td></tr>
-              ) : !data?.customers || data.customers.length === 0 ? (
+              ) : filteredSorted.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="p-12 text-center">
                     <User className="w-12 h-12 mx-auto text-muted-foreground/30 mb-3" />
-                    <p className="text-muted-foreground">No customers yet. Add your first customer!</p>
+                    <p className="text-muted-foreground">No customers found.</p>
                   </td>
                 </tr>
               ) : (
@@ -192,8 +241,13 @@ export default function Customers() {
                   <tr key={c.id || c._id} className="hover:bg-muted/20 transition-colors group">
                     <td className="p-4 pl-6">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm shrink-0">
+                        <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm shrink-0 relative">
                           {c.name.substring(0, 2).toUpperCase()}
+                          {c.gender && (
+                            <span className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center text-white ${c.gender === "male" ? "bg-blue-500" : "bg-pink-500"}`}>
+                              {c.gender === "male" ? "♂" : "♀"}
+                            </span>
+                          )}
                         </div>
                         <div>
                           <p className="font-semibold text-foreground group-hover:text-primary transition-colors">{c.name}</p>
@@ -223,35 +277,24 @@ export default function Customers() {
                       </span>
                     </td>
                     <td className="p-4">
-                      <span className="inline-flex items-center gap-1 bg-primary/10 text-primary px-2.5 py-1 rounded-full text-xs font-semibold">
-                        <TrendingUp className="w-3 h-3" /> {c.totalVisits || 0} visits
+                      <span className="text-sm text-foreground font-medium">
+                        {c.totalVisits || 0} visits
                       </span>
                     </td>
                     <td className="p-4">
                       <div className="flex items-center gap-1.5">
-                        {/* View History */}
                         <Link href={`/customers/${c.id || c._id}/history`}>
-                          <button
-                            title="View Visit History"
-                            className="p-2 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
-                          >
+                          <button title="View Visit History"
+                            className="p-2 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors">
                             <Eye className="w-4 h-4" />
                           </button>
                         </Link>
-                        {/* Edit */}
-                        <button
-                          onClick={() => openEdit(c)}
-                          title="Edit Customer"
-                          className="p-2 rounded-lg bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 transition-colors"
-                        >
+                        <button onClick={() => openEdit(c)} title="Edit Customer"
+                          className="p-2 rounded-lg bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 transition-colors">
                           <Pencil className="w-4 h-4" />
                         </button>
-                        {/* Delete */}
-                        <button
-                          onClick={() => setDeleteCustomer(c)}
-                          title="Delete Customer"
-                          className="p-2 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
-                        >
+                        <button onClick={() => setDeleteCustomer(c)} title="Delete Customer"
+                          className="p-2 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors">
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
@@ -264,9 +307,9 @@ export default function Customers() {
         </div>
 
         {/* Pagination */}
-        {allCustomers.length > PAGE_SIZE && (
+        {filteredSorted.length > PAGE_SIZE && (
           <div className="px-6 py-3 border-t border-border/50 bg-muted/20 flex flex-wrap justify-between items-center gap-3 text-sm text-muted-foreground">
-            <span>Showing {Math.min((page - 1) * PAGE_SIZE + 1, allCustomers.length)}–{Math.min(page * PAGE_SIZE, allCustomers.length)} of {allCustomers.length} customers</span>
+            <span>Showing {Math.min((page - 1) * PAGE_SIZE + 1, filteredSorted.length)}–{Math.min(page * PAGE_SIZE, filteredSorted.length)} of {filteredSorted.length}</span>
             <div className="flex items-center gap-1">
               <button onClick={() => setPage(1)} disabled={page === 1}
                 className="px-2 py-1 rounded-lg border border-border hover:bg-muted transition-colors disabled:opacity-40 text-xs font-medium">«</button>
@@ -313,6 +356,10 @@ export default function Customers() {
                   value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
               </div>
               <div>
+                <label className="block text-sm font-medium mb-2 text-muted-foreground">Gender</label>
+                <GenderToggle value={formData.gender} onChange={v => setFormData({ ...formData, gender: v })} />
+              </div>
+              <div>
                 <label className="block text-sm font-medium mb-1 text-muted-foreground">Phone Number * (10 digits)</label>
                 <input required type="tel" maxLength={10} placeholder="10-digit mobile number"
                   className={`w-full p-3 rounded-xl border bg-muted/30 focus:ring-2 outline-none ${phoneError ? "border-red-400 focus:ring-red-200" : "focus:ring-primary/20"}`}
@@ -326,12 +373,6 @@ export default function Customers() {
                 <input type="date"
                   className="w-full p-3 rounded-xl border bg-muted/30 focus:ring-2 focus:ring-primary/20 outline-none"
                   value={formData.dob} onChange={e => setFormData({ ...formData, dob: e.target.value })} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1 text-muted-foreground">Notes (Optional)</label>
-                <textarea rows={2} placeholder="Any special preferences or notes..."
-                  className="w-full p-3 rounded-xl border bg-muted/30 focus:ring-2 focus:ring-primary/20 outline-none resize-none"
-                  value={formData.notes} onChange={e => setFormData({ ...formData, notes: e.target.value })} />
               </div>
               <div className="flex gap-3 mt-6">
                 <button type="button" onClick={() => { setShowAdd(false); setPhoneError(""); }}
@@ -362,6 +403,10 @@ export default function Customers() {
                 <input required autoFocus placeholder="Enter full name"
                   className="w-full p-3 rounded-xl border bg-muted/30 focus:ring-2 focus:ring-primary/20 outline-none"
                   value={editForm.name} onChange={e => setEditForm({ ...editForm, name: e.target.value })} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2 text-muted-foreground">Gender</label>
+                <GenderToggle value={editForm.gender} onChange={v => setEditForm({ ...editForm, gender: v })} />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1 text-muted-foreground">Phone Number * (10 digits)</label>
@@ -415,11 +460,9 @@ export default function Customers() {
       )}
 
       {/* ── Invoice Modal ── */}
-      {viewInvoiceBill && (
-        <InvoiceModal bill={viewInvoiceBill} onClose={() => setViewInvoiceBill(null)} />
-      )}
+      {viewInvoiceBill && <InvoiceModal bill={viewInvoiceBill} onClose={() => setViewInvoiceBill(null)} />}
 
-      {/* ── View Customer Profile Modal ── */}
+      {/* ── View Customer Profile Modal (inline) ── */}
       {viewCustomerId && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in">
           <div className="bg-card rounded-3xl w-full max-w-2xl shadow-2xl max-h-[90vh] flex flex-col">
@@ -435,10 +478,14 @@ export default function Customers() {
                 <div className="text-center py-12 text-muted-foreground">Loading profile...</div>
               ) : customerDetail ? (
                 <div className="space-y-6">
-                  {/* Customer Info */}
                   <div className="flex items-start gap-4">
-                    <div className="w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-bold text-xl shrink-0">
+                    <div className="w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-bold text-xl shrink-0 relative">
                       {customerDetail.name?.substring(0, 2).toUpperCase()}
+                      {customerDetail.gender && (
+                        <span className={`absolute -bottom-1.5 -right-1.5 w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center text-white ${customerDetail.gender === "male" ? "bg-blue-500" : "bg-pink-500"}`}>
+                          {customerDetail.gender === "male" ? "♂" : "♀"}
+                        </span>
+                      )}
                     </div>
                     <div>
                       <h3 className="text-xl font-bold">{customerDetail.name}</h3>
@@ -453,7 +500,6 @@ export default function Customers() {
                     </div>
                   </div>
 
-                  {/* Stats */}
                   <div className="grid grid-cols-3 gap-4">
                     <div className="bg-muted/30 rounded-2xl p-4 text-center">
                       <p className="text-2xl font-bold text-emerald-600">₹{Number(customerDetail.totalSpend || 0).toLocaleString("en-IN")}</p>
@@ -465,26 +511,20 @@ export default function Customers() {
                     </div>
                     <div className="bg-muted/30 rounded-2xl p-4 text-center">
                       <p className="text-lg font-bold text-secondary">
-                        {customerDetail.lastVisit
-                          ? format(new Date(customerDetail.lastVisit), "dd MMM yy")
-                          : "—"}
+                        {customerDetail.lastVisit ? format(new Date(customerDetail.lastVisit), "dd MMM yy") : "—"}
                       </p>
                       <p className="text-xs text-muted-foreground mt-1">Last Visit</p>
                     </div>
                   </div>
 
-                  {/* Visit History */}
                   <div>
                     <h4 className="font-semibold mb-3 text-sm uppercase tracking-wider text-muted-foreground">Visit History</h4>
                     {!customerDetail.bills || customerDetail.bills.length === 0 ? (
-                      <div className="text-center py-8 text-muted-foreground bg-muted/20 rounded-xl">
-                        No visits yet.
-                      </div>
+                      <div className="text-center py-8 text-muted-foreground bg-muted/20 rounded-xl">No visits yet.</div>
                     ) : (
                       <div className="space-y-3">
                         {customerDetail.bills.map((bill: any) => (
                           <div key={bill.id || bill._id} className="bg-muted/20 rounded-xl p-4 border border-border/40">
-                            {/* Date + Bill Number + Total */}
                             <div className="flex justify-between items-start mb-3">
                               <div>
                                 <p className="font-semibold text-sm">{bill.billNumber}</p>
@@ -493,11 +533,10 @@ export default function Customers() {
                                 </p>
                               </div>
                               <span className="font-bold text-emerald-600 text-base">
-                                ₹{Number(bill.finalAmount).toLocaleString("en-IN")}
+                                ₹{Number(bill.finalAmount || 0).toLocaleString("en-IN")}
                               </span>
                             </div>
 
-                            {/* Services & Products used */}
                             {bill.items && bill.items.length > 0 && (
                               <div className="space-y-1.5 border-t border-border/30 pt-2">
                                 {bill.items.map((item: any, i: number) => (
@@ -507,30 +546,39 @@ export default function Customers() {
                                         ? <Scissors className="w-3 h-3 text-primary" />
                                         : <Package className="w-3 h-3 text-secondary" />}
                                       <span className="font-medium text-foreground">{item.name}</span>
-                                      {item.staffName && (
-                                        <span className="text-muted-foreground/70">· by {item.staffName}</span>
-                                      )}
+                                      {item.quantity > 1 && <span className="text-muted-foreground/70">×{item.quantity}</span>}
+                                      {item.staffName && <span className="text-muted-foreground/60">· {item.staffName}</span>}
                                     </span>
-                                    <span className="font-semibold text-foreground">
-                                      ₹{Number(item.total).toLocaleString("en-IN")}
-                                    </span>
+                                    <span className="font-semibold text-foreground">₹{Number(item.total || 0).toLocaleString("en-IN")}</span>
                                   </div>
                                 ))}
+                                {(bill.discountAmount > 0 || bill.taxAmount > 0) && (
+                                  <div className="border-t border-border/20 pt-1.5 mt-1 space-y-1">
+                                    {bill.discountAmount > 0 && (
+                                      <div className="flex justify-between text-xs">
+                                        <span className="text-muted-foreground">Discount</span>
+                                        <span className="text-red-500 font-medium">-₹{Number(bill.discountAmount).toLocaleString("en-IN")}</span>
+                                      </div>
+                                    )}
+                                    {bill.taxAmount > 0 && (
+                                      <div className="flex justify-between text-xs">
+                                        <span className="text-muted-foreground">Tax ({bill.taxPercent}%)</span>
+                                        <span className="text-foreground font-medium">+₹{Number(bill.taxAmount).toLocaleString("en-IN")}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
                               </div>
                             )}
 
-                            {/* Payment info + View Invoice */}
                             <div className="mt-2 pt-2 border-t border-border/30 flex items-center justify-between gap-3 text-xs text-muted-foreground">
                               <div className="flex items-center gap-3">
                                 <span className="capitalize">💳 {bill.paymentMethod}</span>
-                                <span className={`capitalize font-semibold ${bill.status === "paid" ? "text-emerald-600" : "text-amber-600"}`}>
-                                  {bill.status}
-                                </span>
+                                <span className={`capitalize font-semibold ${bill.status === "paid" ? "text-emerald-600" : "text-amber-600"}`}>{bill.status}</span>
                               </div>
                               <button
                                 onClick={() => setViewInvoiceBill({ ...bill, customerPhone: customerDetail.phone })}
-                                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors font-semibold text-xs"
-                              >
+                                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors font-semibold text-xs">
                                 <FileText className="w-3.5 h-3.5" /> View Invoice
                               </button>
                             </div>

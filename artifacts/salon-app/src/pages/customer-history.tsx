@@ -58,7 +58,7 @@ export default function CustomerHistory() {
   }, [bills, filterMonth, filterYear, filterService]);
 
   const stats = useMemo(() => ({
-    totalSpend: filteredBills.reduce((a: number, b: any) => a + (b.grandTotal || 0), 0),
+    totalSpend: filteredBills.reduce((a: number, b: any) => a + (b.finalAmount || b.grandTotal || 0), 0),
     visits: filteredBills.length,
     lastVisit: filteredBills.length > 0 ? new Date(filteredBills[0].createdAt) : null,
   }), [filteredBills]);
@@ -208,7 +208,7 @@ export default function CustomerHistory() {
                     <div className="shrink-0 text-right">
                       <p className="text-xs text-muted-foreground">Total</p>
                       <p className="font-bold text-primary">
-                        ₹{(bill.grandTotal || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+                        ₹{(bill.finalAmount || bill.grandTotal || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })}
                       </p>
                     </div>
                     <button onClick={() => openInvoice(bill.id || bill._id)} disabled={billLoading}
@@ -216,12 +216,38 @@ export default function CustomerHistory() {
                       <Eye className="w-3.5 h-3.5" /> Invoice
                     </button>
                   </div>
-                  <div className="px-5 py-3 flex flex-wrap gap-2">
+                  <div className="px-5 py-3 space-y-1.5">
                     {(bill.items || []).map((item: any, j: number) => (
-                      <div key={j} className="bg-muted/50 rounded-lg px-3 py-1.5 text-xs font-medium text-foreground">
-                        {item.name}{item.quantity > 1 ? ` ×${item.quantity}` : ""}
+                      <div key={j} className="flex justify-between items-center text-xs">
+                        <div className="flex items-center gap-2">
+                          <div className="bg-muted/70 rounded-lg px-2.5 py-1 font-medium text-foreground">
+                            {item.name}{item.quantity > 1 ? ` ×${item.quantity}` : ""}
+                          </div>
+                          {item.staffName && (
+                            <span className="text-muted-foreground">by {item.staffName}</span>
+                          )}
+                        </div>
+                        <span className="font-semibold text-foreground">
+                          ₹{Number(item.total || 0).toLocaleString("en-IN")}
+                        </span>
                       </div>
                     ))}
+                    {(bill.discountAmount > 0 || bill.taxAmount > 0) && (
+                      <div className="border-t border-border/30 pt-1.5 mt-1 space-y-1">
+                        {bill.discountAmount > 0 && (
+                          <div className="flex justify-between text-xs">
+                            <span className="text-muted-foreground">Discount</span>
+                            <span className="text-red-500 font-medium">-₹{Number(bill.discountAmount).toLocaleString("en-IN")}</span>
+                          </div>
+                        )}
+                        {bill.taxAmount > 0 && (
+                          <div className="flex justify-between text-xs">
+                            <span className="text-muted-foreground">Tax ({bill.taxPercent || 0}%)</span>
+                            <span className="text-foreground font-medium">+₹{Number(bill.taxAmount).toLocaleString("en-IN")}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               );

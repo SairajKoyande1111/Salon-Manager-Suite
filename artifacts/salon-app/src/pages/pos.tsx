@@ -57,7 +57,7 @@ export default function POS() {
   const customerRef = useRef<HTMLDivElement>(null);
   const [customerMembership, setCustomerMembership] = useState<any>(null);
   const [showAddCustomer, setShowAddCustomer] = useState(false);
-  const [addForm, setAddForm]       = useState({ name: "", phone: "", dob: "", notes: "" });
+  const [addForm, setAddForm]       = useState({ name: "", phone: "", dob: "", gender: "" });
   const [addPhoneError, setAddPhoneError] = useState("");
   const [addLoading, setAddLoading] = useState(false);
 
@@ -138,10 +138,10 @@ export default function POS() {
     if (!/^\d{10}$/.test(addForm.phone)) { setAddPhoneError("Phone must be exactly 10 digits"); return; }
     setAddLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/customers`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: addForm.name, phone: addForm.phone, dob: addForm.dob, notes: addForm.notes, email: "" }) });
+      const res = await fetch(`${API_BASE}/customers`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: addForm.name, phone: addForm.phone, dob: addForm.dob, gender: addForm.gender, email: "" }) });
       if (!res.ok) throw new Error();
       const newC = await res.json(); await refetchCustomers(); selectCustomer(newC);
-      setShowAddCustomer(false); setAddForm({ name: "", phone: "", dob: "", notes: "" }); setAddPhoneError("");
+      setShowAddCustomer(false); setAddForm({ name: "", phone: "", dob: "", gender: "" }); setAddPhoneError("");
       toast({ title: "Customer Added", description: `${addForm.name} added & selected.` });
     } catch { toast({ title: "Error", description: "Failed to add customer.", variant: "destructive" }); }
     finally { setAddLoading(false); }
@@ -495,26 +495,41 @@ export default function POS() {
               </button>
             </div>
             <form onSubmit={handleAddCustomer} className="space-y-4">
-              {[
-                { label: "Full Name *", key: "name", type: "text", placeholder: "Enter full name", required: true },
-                { label: "Phone Number * (10 digits)", key: "phone", type: "tel", placeholder: "10-digit mobile number", required: true },
-                { label: "Date of Birth", key: "dob", type: "date", placeholder: "", required: false },
-              ].map(f => (
-                <div key={f.key}>
-                  <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider text-white/60">{f.label}</label>
-                  <input required={f.required} type={f.type} placeholder={f.placeholder}
-                    className={`w-full p-3 rounded-xl focus:outline-none border-0 bg-sidebar text-white placeholder:text-white/30${f.type === "date" ? " [&::-webkit-calendar-picker-indicator]:invert" : ""}`}
-                    value={(addForm as any)[f.key]}
-                    onChange={e => {
-                      let v = e.target.value;
-                      if (f.key === "phone") { v = v.replace(/\D/g, ""); if (v.length === 10) setAddPhoneError(""); }
-                      setAddForm({ ...addForm, [f.key]: v });
-                    }}
-                    maxLength={f.key === "phone" ? 10 : undefined}
-                  />
-                  {f.key === "phone" && addPhoneError && <p className="text-destructive text-xs mt-1">{addPhoneError}</p>}
+              <div>
+                <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider text-white/60">Full Name *</label>
+                <input required type="text" placeholder="Enter full name"
+                  className="w-full p-3 rounded-xl focus:outline-none border-0 bg-sidebar text-white placeholder:text-white/30"
+                  value={addForm.name}
+                  onChange={e => setAddForm({ ...addForm, name: e.target.value })} />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold mb-2 uppercase tracking-wider text-white/60">Gender</label>
+                <div className="flex gap-2">
+                  {[{ label: "♂ Male", value: "male" }, { label: "♀ Female", value: "female" }].map(g => (
+                    <button key={g.value} type="button"
+                      onClick={() => setAddForm({ ...addForm, gender: addForm.gender === g.value ? "" : g.value })}
+                      className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${addForm.gender === g.value ? "bg-primary text-white" : "bg-sidebar text-white/60 hover:text-white"}`}>
+                      {g.label}
+                    </button>
+                  ))}
                 </div>
-              ))}
+              </div>
+              <div>
+                <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider text-white/60">Phone Number * (10 digits)</label>
+                <input required type="tel" placeholder="10-digit mobile number"
+                  className="w-full p-3 rounded-xl focus:outline-none border-0 bg-sidebar text-white placeholder:text-white/30"
+                  value={addForm.phone}
+                  onChange={e => { const v = e.target.value.replace(/\D/g, ""); if (v.length === 10) setAddPhoneError(""); setAddForm({ ...addForm, phone: v }); }}
+                  maxLength={10} />
+                {addPhoneError && <p className="text-destructive text-xs mt-1">{addPhoneError}</p>}
+              </div>
+              <div>
+                <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider text-white/60">Date of Birth</label>
+                <input type="date"
+                  className="w-full p-3 rounded-xl focus:outline-none border-0 bg-sidebar text-white placeholder:text-white/30 [&::-webkit-calendar-picker-indicator]:invert"
+                  value={addForm.dob}
+                  onChange={e => setAddForm({ ...addForm, dob: e.target.value })} />
+              </div>
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => { setShowAddCustomer(false); setAddPhoneError(""); }}
                   className="flex-1 py-3 rounded-xl font-semibold transition-colors bg-sidebar text-white hover:bg-sidebar/80">Cancel</button>
