@@ -26,7 +26,7 @@ const COLLECTIONS = [
   "bills",
   "expenses",
   "customermemberships",
-  "staff",
+  "staffs",
   "services",
   "products",
   "productmetas",
