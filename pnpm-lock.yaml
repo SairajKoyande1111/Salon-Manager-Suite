@@ -611,6 +611,10 @@ importers:
         version: 3.25.76
 
   scripts:
+    dependencies:
+      mongoose:
+        specifier: ^9.3.3
+        version: 9.3.3
     devDependencies:
       '@types/node':
         specifier: 'catalog:'

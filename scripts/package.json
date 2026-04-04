@@ -4,8 +4,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "hello": "tsx ./src/hello.ts",
+    "clear-db": "node ./clear-db.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "mongoose": "^9.3.3"
   },
   "devDependencies": {
     "@types/node": "catalog:",
